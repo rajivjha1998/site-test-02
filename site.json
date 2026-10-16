@@ -299,6 +299,7 @@
           "title": "Explore",
           "group": "main",
           "excludeCurrent": true,
+          "hidden": true,
           "columns": 3,
           "linkLabel": "Learn more"
         },
