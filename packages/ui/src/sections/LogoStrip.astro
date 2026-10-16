@@ -1,0 +1,98 @@
+---
+import type { SectionOf } from '../schemas/sections';
+import { withBase } from '../lib/href';
+import type { WithResolvedImage } from '../lib/image';
+
+type Item = SectionOf<'logoStrip'>['items'][number];
+type Props = Omit<SectionOf<'logoStrip'>, 'type' | 'items'> & {
+  uid: string;
+  items: WithResolvedImage<Item>[];
+};
+const { uid, label, items, band = 'base' } = Astro.props;
+const id = `${uid}-label`;
+---
+
+<section class:list={['strip', `band-${band}`]} aria-labelledby={id}>
+  <div class="container">
+    <p id={id} class="label">
+      {label}
+    </p>
+    <ul>
+      {items.map((item) => {
+        const label = item.image ? (
+          <img
+            class="logo"
+            src={item.image.src}
+            alt={item.image.alt}
+            width={item.image.width}
+            height={item.image.height}
+            loading="lazy"
+            decoding="async"
+          />
+        ) : (
+          item.name
+        );
+        return <li>{item.href ? <a href={withBase(item.href)}>{label}</a> : label}</li>;
+      })}
+    </ul>
+  </div>
+</section>
+
+<style>
+  .strip {
+    padding-block: var(--space-7);
+  }
+
+  .band-surface {
+    background: var(--band-tint);
+    border-block: 1px solid var(--hair-soft);
+  }
+
+  .container {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-4);
+    max-width: var(--container);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  .label {
+    font-size: var(--fs-small);
+    color: var(--muted);
+  }
+
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    padding: 8px 15px;
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--ink);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid transparent;
+    box-shadow: var(--glass-shadow);
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+  .logo {
+    display: block;
+    width: auto;
+    max-width: 140px;
+    height: 28px;
+    object-fit: contain;
+  }
+</style>

@@ -1,0 +1,41 @@
+# Checks a site's access code (sendToSite with event_type verify-access). On success it opens a
+# sign-in session: a branch named exactly request_id (BBPlatform's task number, unique per run).
+# The platform then confirms access by fetching that exact branch; if it doesn't exist (wrong
+# code, or the check isn't finished), that step fails and the run stops. A successful save
+# closes the session again (update-settings.yml).
+#
+#   POST /repos/{owner}/{repo}/dispatches
+#   { "event_type": "verify-access",
+#     "client_payload": { "request_id": "<task number>", "access_code": "<code>" } }
+name: Verify access
+run-name: verify-access ${{ github.event.client_payload.request_id || github.run_id }}
+
+on:
+  repository_dispatch:
+    types: [verify-access]
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    env:
+      ACCESS_CODE: ${{ github.event.client_payload.access_code }}
+      REQUEST_ID: ${{ github.event.client_payload.request_id }}
+    steps:
+      - name: Mask the access code
+        run: '[ -n "$ACCESS_CODE" ] && echo "::add-mask::$ACCESS_CODE" || true'
+
+      - uses: actions/checkout@v7
+
+      - name: Check the request id
+        run: node scripts/session-id.mjs
+
+      - name: Check access code
+        run: node scripts/access-code.mjs verify
+
+      - name: Open the sign-in session
+        run: |
+          git push --force origin "HEAD:refs/heads/$REQUEST_ID"
+          echo "Access granted; session $REQUEST_ID opened." >> "$GITHUB_STEP_SUMMARY"

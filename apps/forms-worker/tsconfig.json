@@ -1,0 +1,6 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": { "resolveJsonModule": true },
+  "include": ["src/**/*.ts", "../website/src/lib/forms-registry.ts"],
+  "exclude": ["node_modules"]
+}

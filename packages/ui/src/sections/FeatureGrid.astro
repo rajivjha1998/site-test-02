@@ -1,0 +1,107 @@
+---
+import type { SectionOf } from '../schemas/sections';
+import SectionShell from '../primitives/SectionShell.astro';
+import SectionHeading from '../primitives/SectionHeading.astro';
+import IconTile from '../primitives/IconTile.astro';
+import Picture from '../primitives/Picture.astro';
+import type { WithResolvedImage } from '../lib/image';
+import Ctas from '../primitives/Ctas.astro';
+import { withBase } from '../lib/href';
+
+type Item = SectionOf<'featureGrid'>['items'][number];
+type Props = Omit<SectionOf<'featureGrid'>, 'type' | 'items'> & {
+  uid: string;
+  items: WithResolvedImage<Item>[];
+};
+const { uid, icon, anchor, title, titleAccent, lede, band, columns, variant, items, ctas } =
+  Astro.props;
+const id = `${uid}-title`;
+---
+
+<SectionShell labelledBy={id} band={band} anchor={anchor}>
+  <SectionHeading id={id} icon={icon} title={title} titleAccent={titleAccent} lede={lede} />
+  <ul class:list={['grid', variant]} style={`--cols: ${columns}`}>
+    {items.map((item) => (
+      <li class="item">
+        {item.image ? (
+          <Picture image={item.image} ratio="3 / 2" />
+        ) : (
+          item.icon && <IconTile name={item.icon} />
+        )}
+        <h3>{item.title}</h3>
+        <p>{item.body}</p>
+        {item.href && (
+          <a class="more" href={withBase(item.href)}>
+            {item.linkLabel ?? item.title}
+          </a>
+        )}
+      </li>
+    ))}
+  </ul>
+  {ctas.length > 0 && (
+    <div class="ctas">
+      <Ctas ctas={ctas} align="center" />
+    </div>
+  )}
+</SectionShell>
+
+<style>
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    gap: var(--space-6) var(--space-7);
+    margin: var(--space-8) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .cards {
+    gap: var(--space-4);
+  }
+
+  .item {
+    display: grid;
+    align-content: start;
+    gap: var(--space-3);
+  }
+
+  .cards .item {
+    padding: var(--space-5) var(--space-5) var(--space-6);
+    border-radius: var(--r-card);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid transparent;
+    box-shadow: var(--glass-shadow);
+  }
+
+  h3 {
+    font-size: var(--fs-h3);
+    line-height: 1.3;
+  }
+
+  p {
+    max-width: 48ch;
+    font-size: 15px;
+  }
+
+  .more {
+    font-size: var(--fs-small);
+  }
+
+  .ctas {
+    margin-top: var(--space-7);
+  }
+
+  @media (max-width: 960px) {
+    .grid {
+      grid-template-columns: repeat(min(var(--cols), 2), minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 760px) {
+    .grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+</style>

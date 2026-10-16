@@ -1,0 +1,12 @@
+{
+  "business": "Pixel & Pine Studio",
+  "summary": "Two-person design studio making brand identities for craft food and drink makers.",
+  "offerings": "Brand identity, packaging design, simple websites. Fixed-price packages.",
+  "tone": "playful",
+  "goal": "contact",
+  "pages": "home, about, services, contact",
+  "color_primary": "#15803d",
+  "color_tertiary": "#fbbf24",
+  "language": "English",
+  "avoid": "corporate jargon"
+}

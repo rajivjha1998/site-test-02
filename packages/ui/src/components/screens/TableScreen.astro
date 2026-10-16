@@ -1,0 +1,155 @@
+---
+import type { ScreenOf } from '../../schemas/screen';
+
+type Props = ScreenOf<'table'>;
+const { toolbar, columns, rows } = Astro.props;
+const template = columns.map((_, i) => (i === 0 ? 'minmax(0, 2fr)' : 'minmax(0, 1fr)')).join(' ');
+---
+
+{toolbar && (
+  <div class="toolbar">
+    <div class="filters">
+      {toolbar.filters.map((f, i) => (
+        <span class:list={['chip', { on: i === 0 }]}>{f}</span>
+      ))}
+    </div>
+    {toolbar.action && <span class="action">{toolbar.action}</span>}
+  </div>
+)}
+<div class="table" role="table" style={`--cols: ${template}`}>
+  <div class="row head" role="row">
+    {columns.map((c) => (
+      <span role="columnheader" class:list={[c.align]}>
+        {c.label}
+      </span>
+    ))}
+  </div>
+  {rows.map((row) => (
+    <div class:list={['row', { highlight: row.highlight }]} role="row">
+      {row.cells.map((cell, i) => (
+        <span
+          role="cell"
+          class:list={[columns[i]?.align, { status: i === row.cells.length - 1 && row.status }]}
+          data-status={i === row.cells.length - 1 ? row.status : undefined}
+        >
+          {cell}
+        </span>
+      ))}
+    </div>
+  ))}
+</div>
+
+<style>
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: var(--space-3) var(--space-4);
+    border-bottom: 1px solid var(--hair-soft);
+  }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .chip {
+    padding: 4px 10px;
+    border: 1px solid var(--hair);
+    border-radius: var(--r-pill);
+    font-size: 11.5px;
+    color: var(--text);
+  }
+
+  .chip.on {
+    border-color: transparent;
+    background: var(--accent-bg);
+    color: var(--accent-text);
+  }
+
+  .action {
+    padding: 5px 10px;
+    border-radius: 6px;
+    background: var(--inverse);
+    color: var(--on-inverse);
+    font-size: 11.5px;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: var(--cols);
+    gap: var(--space-3);
+    align-items: center;
+    padding: 9px var(--space-4);
+    border-bottom: 1px solid var(--hair-soft);
+    font-size: 12.5px;
+    color: var(--ink);
+  }
+
+  .row:last-child {
+    border-bottom: 0;
+  }
+
+  .row span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .head {
+    background: var(--panel);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--muted);
+  }
+
+  .highlight {
+    background: var(--accent-bg);
+  }
+
+  /* Narrow windows keep the first and last columns (what + status) and drop the rest. */
+  @container (max-width: 520px) {
+    .row {
+      grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .row > span:not(:first-child):not(:last-child),
+    .chip:nth-child(n + 3) {
+      display: none;
+    }
+  }
+
+  .end {
+    text-align: end;
+  }
+
+  .status::before {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-inline-end: 6px;
+    border-radius: 50%;
+    background: var(--muted);
+    vertical-align: middle;
+  }
+
+  [data-status='ok']::before {
+    background: var(--ok);
+  }
+
+  [data-status='warn']::before {
+    background: var(--warn);
+  }
+
+  [data-status='error']::before {
+    background: var(--error);
+  }
+
+  [data-status='accent']::before {
+    background: var(--accent);
+  }
+</style>

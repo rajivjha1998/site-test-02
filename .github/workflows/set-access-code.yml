@@ -1,0 +1,57 @@
+# Owner-only: set or reset this site's access code (Actions tab → Set access code → Run
+# workflow). Only people with write access to the repo can run it. The code is stored as a
+# salted hash plus a new sign-in key on main and draft (the old key stops working).
+name: Set access code
+run-name: set-access-code
+
+on:
+  workflow_dispatch:
+    inputs:
+      access_code:
+        description: New access code (at least 8 characters)
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  set:
+    if: ${{ !github.event.repository.is_template }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mask the code
+        env:
+          ACCESS_CODE: ${{ inputs.access_code }}
+        run: echo "::add-mask::$ACCESS_CODE"
+
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+
+      - name: Write the hash and the sign-in key
+        env:
+          ACCESS_CODE: ${{ inputs.access_code }}
+        run: |
+          mkdir -p .site-builder
+          node scripts/access-code.mjs hash > .site-builder/access.json
+          rm -rf .site-builder/keys
+          path=$(node scripts/access-code.mjs keypath)
+          mkdir -p "$(dirname "$path")"
+          node -e "import('./scripts/access-code.mjs').then(m => process.stdout.write(m.KEY_FILE_CONTENT))" > "$path"
+
+      - name: Commit to main and draft
+        run: |
+          git config user.name "site-builder[bot]"
+          git config user.email "site-builder@users.noreply.github.com"
+          git add -A .site-builder
+          git commit -m "Set access code"
+          git push origin HEAD:main
+          if git ls-remote --exit-code --heads origin draft >/dev/null; then
+            git fetch origin draft
+            git checkout -B draft origin/draft
+            git rm -r -q --ignore-unmatch .site-builder/keys
+            git checkout main -- .site-builder
+            git commit -m "Set access code" || true
+            git push origin draft
+          fi
+          echo "Access code updated on main and draft." >> "$GITHUB_STEP_SUMMARY"

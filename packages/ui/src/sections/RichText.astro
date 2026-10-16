@@ -1,0 +1,95 @@
+---
+import type { SectionOf } from '../schemas/sections';
+import SectionShell from '../primitives/SectionShell.astro';
+import SectionHeading from '../primitives/SectionHeading.astro';
+import { renderMarkdown } from '../lib/markdown';
+
+type Props = Omit<SectionOf<'richText'>, 'type'> & { uid: string };
+const { uid, icon, anchor, title, titleAccent, lede, band, body } = Astro.props;
+const id = `${uid}-title`;
+const html = renderMarkdown(body);
+---
+
+<SectionShell labelledBy={id} band={band} anchor={anchor} width="narrow">
+  <SectionHeading
+    id={id}
+    icon={icon}
+    title={title}
+    titleAccent={titleAccent}
+    lede={lede}
+    align="start"
+  />
+  <div class="rich" set:html={html} />
+</SectionShell>
+
+<style>
+  .rich {
+    margin-top: var(--space-7);
+    max-width: 70ch;
+    font-size: 16.5px;
+    line-height: 1.7;
+  }
+
+  .rich :global(h2) {
+    margin: var(--space-7) 0 var(--space-3);
+    font-size: 28px;
+  }
+
+  .rich :global(h3) {
+    margin: var(--space-6) 0 var(--space-2);
+    font-size: 21px;
+  }
+
+  .rich :global(h2:first-child),
+  .rich :global(h3:first-child) {
+    margin-top: 0;
+  }
+
+  .rich :global(p),
+  .rich :global(ul),
+  .rich :global(ol),
+  .rich :global(table),
+  .rich :global(blockquote) {
+    margin: 0 0 var(--space-4);
+  }
+
+  .rich :global(ul),
+  .rich :global(ol) {
+    padding-left: 1.4em;
+  }
+
+  .rich :global(li + li) {
+    margin-top: var(--space-1);
+  }
+
+  .rich :global(strong) {
+    color: var(--ink);
+    font-weight: 500;
+  }
+
+  .rich :global(a) {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .rich :global(blockquote) {
+    padding-left: var(--space-4);
+    border-left: 3px solid var(--hair);
+    color: var(--muted);
+  }
+
+  .rich :global(table) {
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+  }
+
+  .rich :global(th),
+  .rich :global(td) {
+    padding: var(--space-2) var(--space-3);
+    border: 1px solid var(--hair);
+    text-align: left;
+  }
+</style>

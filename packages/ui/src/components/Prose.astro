@@ -1,0 +1,42 @@
+---
+// Long-form text (legal pages, articles) at a comfortable reading measure.
+---
+
+<div class="prose">
+  <slot />
+</div>
+
+<style>
+  .prose {
+    max-width: calc(70ch + 2 * var(--gutter));
+    margin-inline: auto;
+    padding: 0 var(--gutter) var(--section-pad);
+    font-size: 16.5px;
+    line-height: 1.7;
+  }
+
+  .prose :global(h2) {
+    margin: var(--space-7) 0 var(--space-3);
+    font-size: 28px;
+  }
+
+  .prose :global(h3) {
+    margin: var(--space-6) 0 var(--space-2);
+    font-size: 21px;
+  }
+
+  .prose :global(p),
+  .prose :global(ul),
+  .prose :global(ol) {
+    margin: 0 0 var(--space-4);
+  }
+
+  .prose :global(li + li) {
+    margin-top: var(--space-1);
+  }
+
+  .prose :global(strong) {
+    color: var(--ink);
+    font-weight: 500;
+  }
+</style>

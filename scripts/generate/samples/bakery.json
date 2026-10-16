@@ -1,0 +1,15 @@
+{
+  "business": "Hearth & Crumb Bakery",
+  "summary": "Neighbourhood sourdough bakery and cafe in Leeds.",
+  "offerings": "Sourdough loaves, seasonal pastries, weekend brunch, custom celebration cakes. Order ahead by phone or email.",
+  "audience": "Local families and office workers",
+  "tone": "warm",
+  "goal": "visit",
+  "pages": ["home", "about", "contact"],
+  "color_primary": "#b45309",
+  "email": "hello@hearthandcrumb.example",
+  "phone": "+44 113 496 0000",
+  "address": "12 Mill Lane, Leeds LS1 4AB",
+  "hours": "Tue-Fri 7:30-16:00; Sat-Sun 8:00-15:00",
+  "location": "Leeds"
+}

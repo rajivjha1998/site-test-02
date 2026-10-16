@@ -1,0 +1,181 @@
+# Applies answers from the BBPlatform site builder to site.json on the `draft` branch.
+#
+# Triggered by the "Send Settings" agent:
+#   POST /repos/{owner}/{repo}/dispatches
+#   { "event_type": "update-settings",
+#     "client_payload": { "request_id": "<unique id>", "settings": { "brand_name": "Acme", ... } } }
+#
+# Restore an earlier version instead (Version History agent):
+#   { "event_type": "restore-version",
+#     "client_payload": { "request_id": "<unique id>", "sha": "<commit sha from List Versions>" } }
+#
+# Save one edited file instead (Save File agent; path must be listed in site-builder.files.json):
+#   { "event_type": "update-file",
+#     "client_payload": { "request_id": "<unique id>", "path": "CLAUDE.md", "content": "<whole file>",
+#                         "publish": "true" } }
+#
+# "publish": "true" (any event) also publishes draft to main right after a successful save, so the
+# platform doesn't have to wait and call Publisher.
+#
+# Every request must include the site's access code ("access_code" in client_payload); it is
+# checked against the hash in .site-builder/access.json before anything else runs.
+#
+# Flow: apply answers (or restore, or save the file) → validate → build → commit to draft. If any step fails, nothing is
+# committed and the run fails, so the "Build Watcher" agent sees conclusion=failure.
+# The run is named after request_id so Build Watcher can find this exact run.
+name: Update site settings
+run-name: ${{ github.event.action || 'update-settings' }} ${{ github.event.client_payload.request_id || inputs.request_id || github.run_id }}
+
+on:
+  repository_dispatch:
+    types: [update-settings, restore-version, update-file]
+  # Manual test from the Actions tab: paste the settings JSON.
+  workflow_dispatch:
+    inputs:
+      settings:
+        description: 'Settings JSON, e.g. {"brand_name":"Acme","color_primary":"#f97316"}'
+        required: true
+      request_id:
+        description: Optional id to name the run
+        required: false
+
+permissions:
+  contents: write
+  # Lets this workflow start the deploy below: GitHub doesn't start workflows from pushes made
+  # with the built-in token, but it does allow starting one on purpose.
+  actions: write
+
+# One update at a time per repo, in order; never drop a customer's change.
+concurrency:
+  group: site-settings
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.client_payload.branch || 'draft' }}
+          # Full history, so restore-version can read site.json at any earlier commit.
+          fetch-depth: 0
+
+      # Before anything else: refuse requests without this site's access code. The code is
+      # masked in logs and only compared against the stored hash (scripts/access-code.mjs).
+      - name: Check access code
+        if: github.event_name == 'repository_dispatch'
+        env:
+          ACCESS_CODE: ${{ github.event.client_payload.access_code }}
+        run: |
+          [ -n "$ACCESS_CODE" ] && echo "::add-mask::$ACCESS_CODE"
+          node scripts/access-code.mjs verify
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # Passed through env, never interpolated into the script, so answers can't inject shell.
+      - name: Apply settings
+        if: github.event.action != 'restore-version' && github.event.action != 'update-file'
+        run: pnpm apply-settings
+        env:
+          SETTINGS_JSON: ${{ github.event_name == 'repository_dispatch' && toJSON(github.event.client_payload.settings) || inputs.settings }}
+
+      - name: Restore an earlier version
+        if: github.event.action == 'restore-version'
+        env:
+          SHA: ${{ github.event.client_payload.sha }}
+        run: |
+          [[ "$SHA" =~ ^[0-9a-f]{7,40}$ ]] || { echo "::error::Invalid sha '$SHA'"; exit 1; }
+          git checkout "$SHA" -- site.json
+
+      # Content goes through env (never into the script text), so file contents can't inject shell.
+      - name: Save the edited file
+        if: github.event.action == 'update-file'
+        run: pnpm update-file
+        env:
+          FILE_PATH: ${{ github.event.client_payload.path }}
+          FILE_CONTENT: ${{ github.event.client_payload.content }}
+
+      - name: Validate site.json
+        run: pnpm validate
+
+      - name: Build
+        run: pnpm build
+
+      - name: Commit to draft
+        id: commit
+        env:
+          REQUEST_ID: ${{ github.event.client_payload.request_id || inputs.request_id || github.run_id }}
+          BRANCH: ${{ github.event.client_payload.branch || 'draft' }}
+          FILE: ${{ github.event.action == 'update-file' && github.event.client_payload.path || 'site.json' }}
+          MESSAGE: ${{ github.event.action == 'restore-version' && 'Restore version' || github.event.action == 'update-file' && format('Edit {0}', github.event.client_payload.path) || 'Update site settings' }}
+        run: |
+          git config user.name "site-builder[bot]"
+          git config user.email "site-builder@users.noreply.github.com"
+          git add -- "$FILE"
+          if git diff --cached --quiet; then
+            echo "No changes to commit." >> "$GITHUB_STEP_SUMMARY"
+          else
+            git commit -m "$MESSAGE ($REQUEST_ID)"
+            git push origin "HEAD:$BRANCH"
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Committed $FILE to $BRANCH." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # Publishes the draft preview (https://<owner>.github.io/<repo>/preview/).
+      - name: Update the draft preview
+        if: github.event_name == 'repository_dispatch' && steps.commit.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run deploy-pages.yml --ref draft
+          echo "Preview is being updated (about 2 minutes)." >> "$GITHUB_STEP_SUMMARY"
+
+      # Closes the sign-in session opened by verify-access (a branch named after request_id), so
+      # the platform can see the save finished: the branch disappears only after a successful save.
+      - name: Close the sign-in session
+        if: github.event_name == 'repository_dispatch'
+        env:
+          REQUEST_ID: ${{ github.event.client_payload.request_id }}
+        run: |
+          if node scripts/session-id.mjs >/dev/null 2>&1 && git ls-remote --exit-code --heads origin "$REQUEST_ID" >/dev/null; then
+            git push origin --delete "$REQUEST_ID"
+            echo "Session $REQUEST_ID closed." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      # Optional one-step publish: merge draft into main after a successful save.
+      - name: Publish to the live site
+        id: publish
+        if: github.event_name == 'repository_dispatch' && contains(fromJSON('["true","yes","publish"]'), format('{0}', github.event.client_payload.publish))
+        env:
+          REQUEST_ID: ${{ github.event.client_payload.request_id || github.run_id }}
+        run: |
+          # Placeholders ("[Pending: …]", the placeholder picture) must be replaced first.
+          # The change stays saved on draft; only publishing is refused.
+          node scripts/check-publish.mjs
+          draft_sha=$(git rev-parse HEAD)
+          git fetch -q origin main
+          git checkout -q -B main origin/main
+          before=$(git rev-parse HEAD)
+          git merge --no-ff --no-edit -m "Publish ($REQUEST_ID)" "$draft_sha"
+          git push origin main
+          if [ "$(git rev-parse HEAD)" != "$before" ]; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+            echo "Published to main." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Nothing new to publish." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Update the live site
+        if: steps.publish.outputs.published == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run deploy-pages.yml --ref main
+          echo "The live site is being updated (about 2 minutes)." >> "$GITHUB_STEP_SUMMARY"

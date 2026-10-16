@@ -1,0 +1,113 @@
+---
+import type { SectionOf } from '../schemas/sections';
+import type { FormDefinition } from '../schemas/form';
+import SectionShell from '../primitives/SectionShell.astro';
+import Picture from '../primitives/Picture.astro';
+import type { WithResolvedImage } from '../lib/image';
+import ConfigForm from '../forms/ConfigForm.astro';
+import CheckList from '../primitives/CheckList.astro';
+import IconTile from '../primitives/IconTile.astro';
+
+type Props = Omit<WithResolvedImage<SectionOf<'form'>>, 'type' | 'form'> & {
+  uid: string;
+  form: FormDefinition;
+  turnstileSiteKey?: string;
+  formsOrigin?: string;
+};
+
+const {
+  uid,
+  icon,
+  anchor,
+  title,
+  titleAccent,
+  lede,
+  band,
+  form,
+  bullets,
+  bulletsTitle,
+  image,
+  turnstileSiteKey,
+  formsOrigin,
+} = Astro.props;
+const id = `${uid}-title`;
+---
+
+<SectionShell labelledBy={id} band={band} anchor={anchor}>
+  <div class="layout">
+    <div class="copy">
+      {icon && <IconTile name={icon} />}
+      <h2 id={id}>
+        {title}
+        {titleAccent && <span class="accent">{` ${titleAccent}`}</span>}
+      </h2>
+      {lede && <p class="lede">{lede}</p>}
+      {bullets.length > 0 && (
+        <div class="bullets">
+          {bulletsTitle && <p class="bullets-title">{bulletsTitle}</p>}
+          <CheckList items={bullets} />
+        </div>
+      )}
+      {image && <Picture image={image} ratio="16 / 10" />}
+    </div>
+    <div class="card">
+      <ConfigForm form={form} turnstileSiteKey={turnstileSiteKey} formsOrigin={formsOrigin} />
+    </div>
+  </div>
+</SectionShell>
+
+<style>
+  .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: clamp(var(--space-7), 6vw, 72px);
+    align-items: start;
+  }
+
+  .copy {
+    display: grid;
+    gap: var(--space-5);
+  }
+
+  h2 {
+    max-width: 16ch;
+    font-size: clamp(32px, 4vw, 48px);
+  }
+
+  .accent {
+    color: var(--accent);
+  }
+
+  .lede {
+    max-width: 48ch;
+    font-size: var(--fs-lede);
+  }
+
+  .bullets-title {
+    margin-bottom: var(--space-3);
+    font-size: var(--fs-small);
+    color: var(--muted);
+  }
+
+  .card {
+    padding: var(--space-6);
+    border-radius: var(--r-card);
+    background: var(--glass-bg-strong);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid transparent;
+    box-shadow: var(--glass-shadow);
+  }
+
+  @media (max-width: 960px) {
+    .layout {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 760px) {
+    .card {
+      padding: var(--space-5) var(--space-4);
+    }
+  }
+</style>

@@ -1,0 +1,97 @@
+---
+import type { ScreenOf } from '../../schemas/screen';
+
+type Props = ScreenOf<'kpis'>;
+const { tiles, chart } = Astro.props;
+---
+
+<div class="kpis">
+  <div class="tiles">
+    {tiles.map((t) => (
+      <div class="tile">
+        <span class="label">{t.label}</span>
+        <span class="value">{t.value}</span>
+        {t.delta && <span class="delta">{t.delta}</span>}
+      </div>
+    ))}
+  </div>
+  {chart && (
+    <div class="chart">
+      <span class="label">{chart.title}</span>
+      <div class="bars" aria-hidden="true">
+        {chart.bars.map((h, i) => (
+          <span style={`--h: ${h}%`} class:list={{ last: i === chart.bars.length - 1 }} />
+        ))}
+      </div>
+    </div>
+  )}
+</div>
+
+<style>
+  .kpis {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .tiles {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: var(--space-2);
+  }
+
+  .tile {
+    display: grid;
+    gap: 2px;
+    padding: 10px 12px;
+    border: 1px solid var(--hair);
+    border-radius: 10px;
+    background: var(--panel);
+  }
+
+  .label {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--muted);
+  }
+
+  .value {
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .delta {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--accent-text);
+  }
+
+  .chart {
+    display: grid;
+    gap: var(--space-2);
+    padding: 10px 12px;
+    border: 1px solid var(--hair);
+    border-radius: 10px;
+  }
+
+  .bars {
+    display: flex;
+    align-items: end;
+    gap: 4px;
+    height: 88px;
+  }
+
+  .bars span {
+    flex: 1;
+    height: var(--h);
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--accent) 28%, var(--surface));
+  }
+
+  .bars .last {
+    background: var(--accent);
+  }
+</style>

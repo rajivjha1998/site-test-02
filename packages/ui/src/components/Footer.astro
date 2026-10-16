@@ -1,0 +1,182 @@
+---
+import type { Footer } from '../schemas/site';
+import Logo from './Logo.astro';
+import { withBase } from '../lib/href';
+
+interface Props {
+  footer: Footer;
+  siteName: string;
+  /** Root-relative logo file; omit for a text wordmark. */
+  logo?: string;
+}
+
+const { footer, siteName, logo } = Astro.props;
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="container">
+    <div class="grid" style={`--cols: ${footer.columns.length}`}>
+      <div class="brand">
+        <a class="home" href={withBase('/')} aria-label={siteName}>
+          <Logo name={siteName} src={logo} />
+        </a>
+        <p class="tagline">{footer.tagline}</p>
+        {footer.badges.length > 0 && (
+          <ul class="badges">
+            {footer.badges.map((b) => (
+              <li>{b}</li>
+            ))}
+          </ul>
+        )}
+      </div>
+      <nav class="cols" aria-label={footer.labels.footerNav}>
+        {footer.columns.map((col) => (
+          <div class="col">
+            <p class="heading">{col.heading}</p>
+            <ul>
+              {col.links.map((link) => (
+                <li>
+                  <a href={withBase(link.href)}>{link.label}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </nav>
+    </div>
+    <div class="bottom">
+      <p>
+        © {year} {footer.legal}
+      </p>
+      {footer.social.length > 0 && (
+        <ul class="social">
+          {footer.social.map((s) => (
+            <li>
+              <a href={s.href} rel="noopener me">
+                {s.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    border-top: 1px solid var(--hair-soft);
+    background: var(--band-tint);
+  }
+
+  .container {
+    max-width: var(--container);
+    margin-inline: auto;
+    padding: var(--space-8) var(--gutter) var(--space-6);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 3fr);
+    gap: var(--space-7);
+  }
+
+  .brand {
+    display: grid;
+    align-content: start;
+    gap: var(--space-4);
+  }
+
+  .home {
+    justify-self: start;
+    border-radius: 4px;
+    text-decoration: none;
+  }
+
+  .tagline {
+    max-width: 32ch;
+    font-size: var(--fs-small);
+  }
+
+  .badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .badges li {
+    padding: 4px 10px;
+    border: 1px solid var(--hair);
+    border-radius: var(--r-pill);
+    font-size: 12px;
+  }
+
+  .cols {
+    display: grid;
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    gap: var(--space-5);
+  }
+
+  .heading {
+    margin-bottom: var(--space-2);
+    font-size: 13px;
+    color: var(--ink);
+  }
+
+  ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .col a {
+    display: inline-block;
+    padding-block: 5px;
+    font-size: 13.5px;
+    color: var(--text);
+    text-decoration: none;
+  }
+
+  .col a:hover {
+    color: var(--ink);
+    text-decoration: underline;
+  }
+
+  .bottom {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: var(--space-4);
+    margin-top: var(--space-8);
+    padding-top: var(--space-5);
+    border-top: 1px solid var(--hair);
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .social {
+    display: flex;
+    gap: var(--space-4);
+  }
+
+  .social a {
+    color: var(--text);
+  }
+
+  @media (max-width: 960px) {
+    .grid {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 760px) {
+    .cols {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      row-gap: var(--space-6);
+    }
+  }
+</style>

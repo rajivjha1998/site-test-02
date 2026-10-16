@@ -1,0 +1,45 @@
+{
+  "name": "site-template",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.10.1",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @blackboxops/website dev",
+    "build": "pnpm --filter @blackboxops/website build",
+    "preview": "pnpm --filter @blackboxops/website preview",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm --filter @blackboxops/website exec astro check && tsc -p packages/ui --noEmit && tsc -p apps/forms-worker --noEmit",
+    "test": "vitest run",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm test:e2e && pnpm build:full && pnpm test:e2e:full",
+    "test:e2e": "playwright test",
+    "validate": "vitest run apps/website/src/content/site.test.ts",
+    "schema": "UPDATE_SCHEMA=1 vitest run apps/website/src/content/site.test.ts",
+    "apply-settings": "node scripts/apply-settings.mjs",
+    "update-file": "node scripts/update-file.mjs",
+    "build:full": "SITE_CONFIG=tests/fixtures/full.site.json SITE_ASSETS_DIR=tests/fixtures/assets SITE_OUT_DIR=dist-full pnpm --filter @blackboxops/website build",
+    "test:e2e:full": "E2E_FULL=1 E2E_DIST=apps/website/dist-full E2E_SITE=apps/website/tests/fixtures/full.site.json SITE_CONFIG=tests/fixtures/full.site.json SITE_ASSETS_DIR=tests/fixtures/assets SITE_OUT_DIR=dist-full playwright test routes.spec full-site.spec",
+    "check-publish": "node scripts/check-publish.mjs",
+    "generate": "node --import ./scripts/register-ts.mjs scripts/generate-site.mjs"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "0.131.0",
+    "@axe-core/playwright": "^4.13.0",
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
+    "astro": "^7.3.6",
+    "eslint": "^10.12.0",
+    "eslint-plugin-astro": "^3.2.1",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "prettier": "^3.9.9",
+    "prettier-plugin-astro": "^1.1.0",
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.71.1",
+    "vitest": "^5.0.3",
+    "yaml": "^2.9.1"
+  }
+}

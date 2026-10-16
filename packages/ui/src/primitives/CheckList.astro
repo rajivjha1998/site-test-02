@@ -1,0 +1,47 @@
+---
+import Icon from './Icon.astro';
+
+interface Props {
+  items: string[];
+  size?: 'sm' | 'md';
+}
+
+const { items, size = 'md' } = Astro.props;
+---
+
+{items.length > 0 && (
+  <ul class:list={['list', size]}>
+    {items.map((item) => (
+      <li>
+        <Icon name="check-circle" size={size === 'sm' ? 16 : 18} class="mark" />
+        <span>{item}</span>
+      </li>
+    ))}
+  </ul>
+)}
+
+<style>
+  .list {
+    display: grid;
+    gap: var(--space-2);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 15px;
+  }
+
+  .sm li {
+    font-size: 14.5px;
+  }
+
+  .list :global(.mark) {
+    margin-top: 3px;
+    color: var(--accent);
+  }
+</style>

@@ -1,0 +1,27 @@
+---
+import type { Screen } from '../../schemas/screen';
+import TableScreen from './TableScreen.astro';
+import TreeScreen from './TreeScreen.astro';
+import ChatScreen from './ChatScreen.astro';
+import WizardScreen from './WizardScreen.astro';
+import KpiScreen from './KpiScreen.astro';
+import CatalogScreen from './CatalogScreen.astro';
+import FormScreen from './FormScreen.astro';
+import FlowScreen from './FlowScreen.astro';
+import AgentsScreen from './AgentsScreen.astro';
+import WorkflowScreen from './WorkflowScreen.astro';
+
+type Props = Screen;
+const screen = Astro.props;
+---
+
+{screen.kind === 'table' && <TableScreen {...screen} />}
+{screen.kind === 'tree' && <TreeScreen {...screen} />}
+{screen.kind === 'chat' && <ChatScreen {...screen} />}
+{screen.kind === 'wizard' && <WizardScreen {...screen} />}
+{screen.kind === 'kpis' && <KpiScreen {...screen} />}
+{screen.kind === 'catalog' && <CatalogScreen {...screen} />}
+{screen.kind === 'form' && <FormScreen {...screen} />}
+{screen.kind === 'flow' && <FlowScreen {...screen} />}
+{screen.kind === 'agents' && <AgentsScreen {...screen} />}
+{screen.kind === 'workflow' && <WorkflowScreen {...screen} />}

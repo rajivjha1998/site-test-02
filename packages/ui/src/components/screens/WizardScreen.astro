@@ -1,0 +1,161 @@
+---
+import type { ScreenOf } from '../../schemas/screen';
+
+type Props = ScreenOf<'wizard'>;
+const { steps, active, title, fields, primary } = Astro.props;
+---
+
+<div class="wizard">
+  <ol class="steps">
+    {steps.map((step, i) => (
+      <li class:list={{ done: i < active, on: i === active }}>
+        <span class="dot" aria-hidden="true">
+          {i < active ? '✓' : i + 1}
+        </span>
+        <span class="step-label">{step}</span>
+      </li>
+    ))}
+  </ol>
+  <div class="body">
+    <p class="title">{title}</p>
+    <div class="options">
+      {fields.map((f) => (
+        <div class:list={['option', { selected: f.selected }]}>
+          <span class="opt-label">{f.label}</span>
+          <span class="opt-value">{f.value}</span>
+        </div>
+      ))}
+    </div>
+    <span class="primary">{primary}</span>
+  </div>
+</div>
+
+<style>
+  .wizard {
+    display: grid;
+    grid-template-columns: minmax(0, 190px) minmax(0, 1fr);
+  }
+
+  .steps {
+    display: grid;
+    align-content: start;
+    gap: 2px;
+    margin: 0;
+    padding: var(--space-4) var(--space-3);
+    border-inline-end: 1px solid var(--hair-soft);
+    background: var(--panel);
+    list-style: none;
+  }
+
+  .steps li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 7px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .steps .on {
+    background: var(--surface);
+    color: var(--ink);
+  }
+
+  .steps .done {
+    color: var(--text);
+  }
+
+  .dot {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 18px;
+    height: 18px;
+    border: 1px solid var(--hair);
+    border-radius: 50%;
+    font-family: var(--font-mono);
+    font-size: 10px;
+  }
+
+  .on .dot {
+    border-color: var(--accent-text);
+    color: var(--accent-text);
+  }
+
+  .done .dot {
+    border-color: transparent;
+    background: var(--accent-bg);
+    color: var(--accent-text);
+  }
+
+  .body {
+    display: grid;
+    align-content: start;
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .title {
+    font-family: var(--font-display);
+    font-size: 17px;
+    color: var(--ink);
+  }
+
+  .options {
+    display: grid;
+    gap: 6px;
+  }
+
+  .option {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: 9px 11px;
+    border: 1px solid var(--hair);
+    border-radius: 8px;
+    font-size: 12.5px;
+    color: var(--ink);
+  }
+
+  .option.selected {
+    border-color: var(--accent-text);
+    background: var(--accent-bg);
+  }
+
+  .opt-value {
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--muted);
+  }
+
+  .selected .opt-value {
+    color: var(--accent-text);
+  }
+
+  .primary {
+    justify-self: end;
+    padding: 7px 12px;
+    border-radius: 6px;
+    background: var(--inverse);
+    color: var(--on-inverse);
+    font-size: 12px;
+  }
+
+  @media (max-width: 760px) {
+    .wizard {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .steps {
+      display: flex;
+      overflow: hidden;
+      border-inline-end: 0;
+      border-bottom: 1px solid var(--hair-soft);
+    }
+
+    .steps li:not(.on) .step-label {
+      display: none;
+    }
+  }
+</style>

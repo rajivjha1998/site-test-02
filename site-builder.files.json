@@ -1,0 +1,20 @@
+{
+  "$comment": "Files the BBPlatform site builder may read and save (Save File / update-file). Exact paths only; anything else is refused. The dropdown in the 'What do you want to change?' HIL step uses these paths as values.",
+  "maxBytes": 61440,
+  "files": [
+    { "path": "site.json", "label": "Page content", "language": "json" },
+    { "path": "claude-design.md", "label": "Design rules", "language": "markdown" },
+    { "path": "CLAUDE.md", "label": "Claude instructions", "language": "markdown" },
+    {
+      "path": ".claude/skills/marketing-expert/SKILL.md",
+      "label": "Copywriting skill",
+      "language": "markdown"
+    },
+    { "path": ".claude/skills/seo-aeo/SKILL.md", "label": "SEO skill", "language": "markdown" },
+    {
+      "path": ".claude/skills/frontend-design/SKILL.md",
+      "label": "Design skill",
+      "language": "markdown"
+    }
+  ]
+}

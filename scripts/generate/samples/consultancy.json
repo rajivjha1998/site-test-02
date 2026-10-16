@@ -1,0 +1,12 @@
+{
+  "business": "Northline Advisory",
+  "summary": "Independent financial planning for freelancers and small business owners.",
+  "offerings": "Retirement planning, tax-efficient saving, annual financial health check. First consultation is free.",
+  "audience": "Freelancers and owner-managed businesses",
+  "tone": "professional",
+  "goal": "book",
+  "pages": ["home", "about", "services", "contact", "privacy"],
+  "color_primary": "#1d4ed8",
+  "color_secondary": "#0f172a",
+  "email": "hello@northline.example"
+}

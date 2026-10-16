@@ -1,0 +1,66 @@
+---
+import type { ScreenOf } from '../../schemas/screen';
+
+type Props = ScreenOf<'form'>;
+const { title, fields, primary } = Astro.props;
+---
+
+<div class="form">
+  <p class="title">{title}</p>
+  {fields.map((f) => (
+    <div class="field">
+      <span class="label">{f.label}</span>
+      <span class="input">{f.value}</span>
+      {f.hint && <span class="hint">{f.hint}</span>}
+    </div>
+  ))}
+  <span class="primary">{primary}</span>
+</div>
+
+<style>
+  .form {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .title {
+    font-family: var(--font-display);
+    font-size: 17px;
+    color: var(--ink);
+  }
+
+  .field {
+    display: grid;
+    gap: 4px;
+  }
+
+  .label {
+    font-size: 11.5px;
+    color: var(--text);
+  }
+
+  .input {
+    padding: 8px 10px;
+    border: 1px solid var(--hair);
+    border-radius: 7px;
+    background: var(--surface);
+    font-size: 12.5px;
+    color: var(--ink);
+  }
+
+  .hint {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--accent-text);
+  }
+
+  .primary {
+    justify-self: start;
+    padding: 8px 14px;
+    border-radius: 6px;
+    background: var(--inverse);
+    color: var(--on-inverse);
+    font-size: 12px;
+  }
+</style>

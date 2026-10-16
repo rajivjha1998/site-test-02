@@ -1,0 +1,58 @@
+---
+import type { ResolvedImage } from '../lib/image';
+
+interface Props {
+  image: ResolvedImage;
+  /** Above-the-fold image: loads immediately and first. Everything else lazy-loads. */
+  priority?: boolean;
+  fit?: 'cover' | 'contain';
+  /** CSS aspect ratio, e.g. "16 / 10". Crops with `fit="cover"` so a row of pictures lines up. */
+  ratio?: string;
+  radius?: 'card' | 'full' | 'none';
+  sizes?: string;
+}
+
+const { image, priority = false, fit = 'cover', ratio, radius = 'card', sizes } = Astro.props;
+---
+
+<img
+  class:list={['picture', fit, `r-${radius}`]}
+  src={image.src}
+  alt={image.alt}
+  width={image.width}
+  height={image.height}
+  loading={priority ? 'eager' : 'lazy'}
+  decoding="async"
+  fetchpriority={priority ? 'high' : undefined}
+  sizes={sizes}
+  style={ratio ? `aspect-ratio: ${ratio}` : undefined}
+/>
+
+<style>
+  .picture {
+    display: block;
+    width: 100%;
+    height: auto;
+    background: var(--panel);
+  }
+
+  .cover {
+    object-fit: cover;
+  }
+
+  .contain {
+    object-fit: contain;
+  }
+
+  .r-card {
+    border-radius: var(--r-card);
+  }
+
+  .r-full {
+    border-radius: var(--r-pill);
+  }
+
+  .r-none {
+    border-radius: 0;
+  }
+</style>

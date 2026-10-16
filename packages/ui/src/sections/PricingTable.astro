@@ -1,0 +1,128 @@
+---
+import type { SectionOf } from '../schemas/sections';
+import SectionShell from '../primitives/SectionShell.astro';
+import SectionHeading from '../primitives/SectionHeading.astro';
+import Button from '../primitives/Button.astro';
+import CheckList from '../primitives/CheckList.astro';
+
+type Props = Omit<SectionOf<'pricingTable'>, 'type'> & { uid: string };
+const { uid, icon, anchor, title, titleAccent, lede, band, plans, note } = Astro.props;
+const id = `${uid}-title`;
+---
+
+<SectionShell labelledBy={id} band={band} anchor={anchor}>
+  <SectionHeading id={id} icon={icon} title={title} titleAccent={titleAccent} lede={lede} />
+  <ul class="plans" style={`--n: ${plans.length}`}>
+    {plans.map((plan) => (
+      <li class:list={['plan', { highlight: plan.highlight }]}>
+        <div class="top">
+          <h3>{plan.name}</h3>
+          {plan.highlight && plan.highlightLabel && (
+            <span class="badge">{plan.highlightLabel}</span>
+          )}
+        </div>
+        <p class="price">
+          {plan.price}
+          {plan.period && <span class="period">{plan.period}</span>}
+        </p>
+        <p class="summary">{plan.summary}</p>
+        <Button href={plan.cta.href} variant={plan.highlight ? 'primary' : 'secondary'}>
+          {plan.cta.label}
+        </Button>
+        <div class="features">
+          <CheckList items={plan.features} size="sm" />
+        </div>
+      </li>
+    ))}
+  </ul>
+  {note && <p class="note">{note}</p>}
+</SectionShell>
+
+<style>
+  .plans {
+    display: grid;
+    grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+    gap: var(--space-4);
+    margin: var(--space-8) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .plan {
+    display: grid;
+    grid-template-rows: auto auto auto auto 1fr;
+    gap: var(--space-4);
+    padding: var(--space-6) var(--space-5);
+    border-radius: var(--r-card);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid transparent;
+    box-shadow: var(--glass-shadow);
+  }
+
+  .highlight {
+    border-color: var(--accent-text);
+    box-shadow: var(--sh-card);
+  }
+
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  h3 {
+    font-size: 22px;
+  }
+
+  .badge {
+    padding: 3px 10px;
+    border-radius: var(--r-pill);
+    background: var(--accent-bg);
+    font-size: 12px;
+    color: var(--accent-text);
+  }
+
+  .price {
+    font-family: var(--font-display);
+    font-size: 36px;
+    font-weight: 500;
+    line-height: 1.1;
+    color: var(--ink);
+  }
+
+  .period {
+    margin-inline-start: 6px;
+    font-family: var(--font-body);
+    font-size: var(--fs-small);
+    font-weight: 400;
+    color: var(--muted);
+  }
+
+  .summary {
+    font-size: 15px;
+  }
+
+  .features {
+    margin-top: var(--space-2);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--hair-soft);
+  }
+
+  .note {
+    margin-top: var(--space-5);
+    font-size: 13px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  @media (max-width: 960px) {
+    .plans {
+      grid-template-columns: minmax(0, 1fr);
+      max-width: 520px;
+      margin-inline: auto;
+    }
+  }
+</style>

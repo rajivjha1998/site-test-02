@@ -1,0 +1,109 @@
+---
+import type { ScreenOf, TreeNode } from '../../schemas/screen';
+
+type Props = ScreenOf<'tree'>;
+const { groups } = Astro.props;
+
+interface Flat {
+  node: TreeNode;
+  depth: number;
+}
+const flatten = (nodes: TreeNode[], depth = 0): Flat[] =>
+  nodes.flatMap((node) => [{ node, depth }, ...flatten(node.children ?? [], depth + 1)]);
+---
+
+<div class="tree">
+  {groups.map((group) => (
+    <div class="group">
+      <div class="group-head">
+        <span>{group.label}</span>
+        {group.count !== undefined && <span class="count">{group.count}</span>}
+      </div>
+      <ul>
+        {flatten(group.nodes).map(({ node, depth }) => (
+          <li style={`--depth: ${depth}`} data-status={node.status}>
+            <span class="caret" aria-hidden="true">
+              {node.children?.length ? '▾' : '·'}
+            </span>
+            <span class="label">{node.label}</span>
+            {node.meta && <span class="meta">{node.meta}</span>}
+          </li>
+        ))}
+      </ul>
+    </div>
+  ))}
+</div>
+
+<style>
+  .tree {
+    padding: var(--space-2) 0;
+  }
+
+  .group + .group {
+    border-top: 1px solid var(--hair-soft);
+  }
+
+  .group-head {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-3) var(--space-4) var(--space-1);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--muted);
+  }
+
+  ul {
+    margin: 0;
+    padding: 0 0 var(--space-2);
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 6px var(--space-4) 6px calc(var(--space-4) + var(--depth) * 18px);
+    font-size: 12.5px;
+    color: var(--ink);
+  }
+
+  .caret {
+    width: 10px;
+    color: var(--muted);
+  }
+
+  .label {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .meta {
+    flex: none;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--muted);
+  }
+
+  [data-status='accent'] {
+    background: var(--accent-bg);
+  }
+
+  [data-status='accent'] .meta {
+    color: var(--accent-text);
+  }
+
+  [data-status='warn'] .meta {
+    color: var(--warn-text);
+  }
+
+  [data-status='ok'] .meta {
+    color: var(--ok-text);
+  }
+
+  [data-status='error'] .meta {
+    color: var(--error-text);
+  }
+</style>

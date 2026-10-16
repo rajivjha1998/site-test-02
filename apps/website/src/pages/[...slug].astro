@@ -1,0 +1,39 @@
+---
+// Every page in site.json `pages`: the key is the URL path ("/", "/contact/").
+import SectionRenderer from '@blackboxops/ui/sections/SectionRenderer.astro';
+import type { Page } from '@blackboxops/ui/schemas/page.ts';
+import SiteLayout from '../layouts/SiteLayout.astro';
+import { slugFromPath } from '../lib/paths';
+import { breadcrumbs, getEntity, getPages, pageJsonLd, renderContext } from '../lib/site';
+
+export async function getStaticPaths() {
+  const pages = await getPages();
+  return pages.map(({ page, path }) => ({
+    params: { slug: slugFromPath(path) },
+    props: { page, path },
+  }));
+}
+
+interface Props {
+  page: Page;
+  path: string;
+}
+
+const { page, path } = Astro.props;
+const [entity, pages] = await Promise.all([getEntity(), getPages()]);
+const context = await renderContext(path, pages);
+
+const seo = {
+  title: page.seo.title,
+  description: page.seo.description,
+  image: page.seo.image,
+  noindex: page.seo.noindex,
+  path,
+  breadcrumbs: breadcrumbs(path, pages),
+  jsonLd: pageJsonLd(page, path, entity),
+};
+---
+
+<SiteLayout seo={seo}>
+  <SectionRenderer sections={page.sections} context={context} />
+</SiteLayout>

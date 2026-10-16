@@ -1,0 +1,14 @@
+{
+  "name": "@blackboxops/forms-worker",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Standalone Cloudflare Worker that receives website form submissions when the site is hosted statically (e.g. GitHub Pages).",
+  "scripts": {
+    "deploy": "npx wrangler deploy",
+    "dev": "npx wrangler dev"
+  },
+  "dependencies": {
+    "@blackboxops/ui": "workspace:*"
+  }
+}

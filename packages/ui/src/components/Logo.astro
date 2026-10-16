@@ -1,0 +1,39 @@
+---
+import { withBase } from '../lib/href';
+
+interface Props {
+  /** Brand name: the wordmark when there is no logo file. */
+  name: string;
+  /** Root-relative logo file, e.g. /assets/logo.svg; omit for a text wordmark. */
+  src?: string;
+  height?: number;
+}
+
+const { name, src, height = 28 } = Astro.props;
+---
+
+{src ? (
+  <img class="logo" src={withBase(src)} alt="" height={height} style={`height: ${height}px`} />
+) : (
+  <span class="wordmark" aria-hidden="true">
+    {name}
+  </span>
+)}
+
+<style>
+  .logo {
+    display: block;
+    width: auto;
+    max-width: 200px;
+    object-fit: contain;
+  }
+  .wordmark {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+</style>

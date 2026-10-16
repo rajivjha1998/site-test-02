@@ -1,0 +1,145 @@
+---
+import type { SectionOf } from '../schemas/sections';
+import SectionShell from '../primitives/SectionShell.astro';
+import SectionHeading from '../primitives/SectionHeading.astro';
+import Ctas from '../primitives/Ctas.astro';
+
+type Props = Omit<SectionOf<'contact'>, 'type'> & { uid: string };
+const {
+  uid,
+  icon,
+  anchor,
+  title,
+  titleAccent,
+  lede,
+  band,
+  email,
+  phone,
+  address,
+  hours,
+  ctas,
+  emailLabel,
+  phoneLabel,
+  addressLabel,
+  hoursLabel,
+} = Astro.props;
+const id = `${uid}-title`;
+const tel = phone?.replace(/[^+0-9]/g, '');
+---
+
+<SectionShell labelledBy={id} band={band} anchor={anchor} width="narrow">
+  <SectionHeading id={id} icon={icon} title={title} titleAccent={titleAccent} lede={lede} />
+  <div class="card">
+    <dl>
+      {email && (
+        <div class="row">
+          <dt>{emailLabel}</dt>
+          <dd>
+            <a href={`mailto:${email}`}>{email}</a>
+          </dd>
+        </div>
+      )}
+      {phone && (
+        <div class="row">
+          <dt>{phoneLabel}</dt>
+          <dd>
+            <a href={`tel:${tel}`}>{phone}</a>
+          </dd>
+        </div>
+      )}
+      {address && (
+        <div class="row">
+          <dt>{addressLabel}</dt>
+          <dd class="address">{address}</dd>
+        </div>
+      )}
+      {hours.length > 0 && (
+        <div class="row">
+          <dt>{hoursLabel}</dt>
+          <dd>
+            <ul>
+              {hours.map((line) => (
+                <li>{line}</li>
+              ))}
+            </ul>
+          </dd>
+        </div>
+      )}
+    </dl>
+    {ctas.length > 0 && (
+      <div class="ctas">
+        <Ctas ctas={ctas} />
+      </div>
+    )}
+  </div>
+</SectionShell>
+
+<style>
+  .card {
+    margin-top: var(--space-7);
+    padding: var(--space-6);
+    border-radius: var(--r-card);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid transparent;
+    box-shadow: var(--glass-shadow);
+  }
+
+  dl {
+    display: grid;
+    gap: var(--space-4);
+    margin: 0;
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: 9rem minmax(0, 1fr);
+    gap: var(--space-3);
+  }
+
+  dt {
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    color: var(--muted);
+    padding-top: 3px;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--ink);
+  }
+
+  dd a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .address {
+    white-space: pre-line;
+  }
+
+  ul {
+    display: grid;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .ctas {
+    margin-top: var(--space-6);
+  }
+
+  @media (max-width: 560px) {
+    .row {
+      grid-template-columns: minmax(0, 1fr);
+      gap: var(--space-1);
+    }
+
+    .card {
+      padding: var(--space-5);
+    }
+  }
+</style>

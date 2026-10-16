@@ -1,0 +1,135 @@
+---
+// Our icon vocabulary, drawn by Lucide (ISC licence, https://lucide.dev). Content uses our
+// semantic names; swapping the icon set means editing only this file.
+import type { IconName } from '../schemas/common';
+import ArrowRight from '@lucide/astro/icons/arrow-right';
+import BadgeCheck from '@lucide/astro/icons/badge-check';
+import Bell from '@lucide/astro/icons/bell';
+import Blocks from '@lucide/astro/icons/blocks';
+import Bot from '@lucide/astro/icons/bot';
+import Boxes from '@lucide/astro/icons/boxes';
+import Building from '@lucide/astro/icons/building';
+import Cable from '@lucide/astro/icons/cable';
+import CalendarClock from '@lucide/astro/icons/calendar-clock';
+import ChartColumn from '@lucide/astro/icons/chart-column';
+import Check from '@lucide/astro/icons/check';
+import ChevronRight from '@lucide/astro/icons/chevron-right';
+import CircleCheck from '@lucide/astro/icons/circle-check';
+import ClipboardList from '@lucide/astro/icons/clipboard-list';
+import Clock from '@lucide/astro/icons/clock';
+import Cloud from '@lucide/astro/icons/cloud';
+import Database from '@lucide/astro/icons/database';
+import FileCheck from '@lucide/astro/icons/file-check';
+import FileText from '@lucide/astro/icons/file-text';
+import Gauge from '@lucide/astro/icons/gauge';
+import GitMerge from '@lucide/astro/icons/git-merge';
+import Globe from '@lucide/astro/icons/globe';
+import Handshake from '@lucide/astro/icons/handshake';
+import HardHat from '@lucide/astro/icons/hard-hat';
+import House from '@lucide/astro/icons/house';
+import KeyRound from '@lucide/astro/icons/key-round';
+import Layers from '@lucide/astro/icons/layers';
+import LayoutGrid from '@lucide/astro/icons/layout-grid';
+import Link from '@lucide/astro/icons/link';
+import ListChecks from '@lucide/astro/icons/list-checks';
+import ListTree from '@lucide/astro/icons/list-tree';
+import Lock from '@lucide/astro/icons/lock';
+import Mail from '@lucide/astro/icons/mail';
+import MessageSquareText from '@lucide/astro/icons/message-square-text';
+import Minus from '@lucide/astro/icons/minus';
+import Network from '@lucide/astro/icons/network';
+import PlugZap from '@lucide/astro/icons/plug-zap';
+import Rocket from '@lucide/astro/icons/rocket';
+import Route from '@lucide/astro/icons/route';
+import ScanSearch from '@lucide/astro/icons/scan-search';
+import Server from '@lucide/astro/icons/server';
+import Settings2 from '@lucide/astro/icons/settings-2';
+import ShieldCheck from '@lucide/astro/icons/shield-check';
+import SlidersHorizontal from '@lucide/astro/icons/sliders-horizontal';
+import Sparkles from '@lucide/astro/icons/sparkles';
+import Timer from '@lucide/astro/icons/timer';
+import Users from '@lucide/astro/icons/users';
+import Workflow from '@lucide/astro/icons/workflow';
+import Wrench from '@lucide/astro/icons/wrench';
+import Zap from '@lucide/astro/icons/zap';
+
+interface Props {
+  name: IconName;
+  size?: number;
+  /** Accessible name; omit for decorative icons (most of them). */
+  label?: string;
+  class?: string;
+}
+
+const icons = {
+  apps: LayoutGrid,
+  'arrow-right': ArrowRight,
+  audit: FileCheck,
+  badge: BadgeCheck,
+  bell: Bell,
+  blocks: Blocks,
+  bot: Bot,
+  boxes: Boxes,
+  building: Building,
+  cable: Cable,
+  calendar: CalendarClock,
+  chart: ChartColumn,
+  chat: MessageSquareText,
+  check: Check,
+  'check-circle': CircleCheck,
+  'chevron-right': ChevronRight,
+  clock: Clock,
+  cloud: Cloud,
+  database: Database,
+  document: FileText,
+  form: ClipboardList,
+  gauge: Gauge,
+  globe: Globe,
+  handshake: Handshake,
+  'hard-hat': HardHat,
+  home: House,
+  key: KeyRound,
+  layers: Layers,
+  link: Link,
+  list: ListChecks,
+  lock: Lock,
+  mail: Mail,
+  merge: GitMerge,
+  minus: Minus,
+  network: Network,
+  plug: PlugZap,
+  rocket: Rocket,
+  route: Route,
+  search: ScanSearch,
+  server: Server,
+  settings: Settings2,
+  shield: ShieldCheck,
+  sliders: SlidersHorizontal,
+  sparkle: Sparkles,
+  timer: Timer,
+  tree: ListTree,
+  users: Users,
+  workflow: Workflow,
+  wrench: Wrench,
+  zap: Zap,
+} satisfies Record<IconName, unknown>;
+
+const { name, size = 24, label, class: className } = Astro.props;
+const Svg = icons[name];
+---
+
+<Svg
+  size={size}
+  stroke-width={1.75}
+  class:list={['icon', className]}
+  role={label ? 'img' : undefined}
+  aria-label={label}
+  aria-hidden={label ? undefined : 'true'}
+  focusable="false"
+/>
+
+<style>
+  .icon {
+    flex: none;
+  }
+</style>

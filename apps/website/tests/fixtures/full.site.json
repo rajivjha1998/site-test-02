@@ -1,0 +1,539 @@
+{
+  "$schema": "../../../../site.schema.json",
+  "schemaVersion": 1,
+  "brand": {
+    "name": "Fixture Co",
+    "tagline": "A test site for every section.",
+    "description": "Fixture Co is a test site that uses every section the template offers.",
+    "url": "https://fixture.example.com",
+    "logo": "assets/logo.svg",
+    "contactEmail": "hello@example.com"
+  },
+  "theme": {
+    "primary": "#c2410c",
+    "secondary": "#be185d",
+    "tertiary": "#facc15"
+  },
+  "navigation": {
+    "items": [
+      {
+        "label": "Services",
+        "href": "/services/"
+      },
+      {
+        "label": "About",
+        "href": "/about/"
+      },
+      {
+        "label": "FAQ",
+        "href": "/#faq"
+      }
+    ],
+    "actions": [
+      {
+        "label": "Contact",
+        "href": "/about/#contact",
+        "variant": "primary"
+      }
+    ],
+    "labels": {
+      "menu": "Menu",
+      "close": "Close",
+      "home": "Home",
+      "primaryNav": "Primary"
+    }
+  },
+  "footer": {
+    "columns": [
+      {
+        "heading": "Explore",
+        "links": [
+          {
+            "label": "Services",
+            "href": "/services/"
+          },
+          {
+            "label": "About",
+            "href": "/about/"
+          },
+          {
+            "label": "Privacy",
+            "href": "/privacy/"
+          }
+        ]
+      }
+    ],
+    "labels": {
+      "footerNav": "Footer"
+    }
+  },
+  "pages": {
+    "/": {
+      "seo": {
+        "description": "Fixture Co is a test site that uses every section the template offers."
+      },
+      "breadcrumb": "Home",
+      "sections": [
+        {
+          "type": "hero",
+          "layout": "split",
+          "title": "Fixture Co builds things.",
+          "titleAccent": "Every section.",
+          "lede": "A test site that uses every section type the template offers.",
+          "ctas": [
+            {
+              "label": "See services",
+              "href": "/services/",
+              "variant": "primary"
+            },
+            {
+              "label": "About us",
+              "href": "/about/",
+              "variant": "secondary"
+            }
+          ],
+          "image": {
+            "src": "assets/hero.png",
+            "alt": "A blue gradient test image"
+          }
+        },
+        {
+          "type": "logoStrip",
+          "label": "Seen with",
+          "items": [
+            {
+              "name": "Logo Co",
+              "image": {
+                "src": "assets/logo.svg",
+                "alt": "Logo Co"
+              }
+            },
+            {
+              "name": "Plain Name Ltd"
+            },
+            {
+              "name": "Linked Co",
+              "href": "/about/"
+            }
+          ]
+        },
+        {
+          "type": "statStrip",
+          "anchor": "stats",
+          "title": "In numbers",
+          "items": [
+            {
+              "value": "12",
+              "label": "Years"
+            },
+            {
+              "value": "480",
+              "label": "Projects"
+            },
+            {
+              "value": "4.9",
+              "label": "Rating"
+            }
+          ]
+        },
+        {
+          "type": "featureGrid",
+          "anchor": "features",
+          "band": "surface",
+          "title": "What we do.",
+          "titleAccent": "And why.",
+          "columns": 3,
+          "variant": "cards",
+          "items": [
+            {
+              "image": {
+                "src": "assets/photo.jpg",
+                "alt": "An orange test photo"
+              },
+              "title": "With a picture",
+              "body": "This card shows a photo instead of an icon."
+            },
+            {
+              "icon": "zap",
+              "title": "With an icon",
+              "body": "This card shows an icon."
+            },
+            {
+              "image": {
+                "src": "assets/banner.webp",
+                "alt": "A green WebP test banner"
+              },
+              "title": "WebP works too",
+              "body": "Pictures can be PNG, JPEG, WebP, AVIF or SVG."
+            }
+          ],
+          "ctas": [
+            {
+              "label": "Learn more",
+              "href": "/services/",
+              "variant": "secondary"
+            }
+          ]
+        },
+        {
+          "type": "split",
+          "title": "Text beside a picture.",
+          "body": [
+            "The picture keeps its shape while the page loads, because its size is read at build time."
+          ],
+          "bullets": ["Sizes are read from the file", "Alt text is required"],
+          "ctas": [
+            {
+              "label": "Get in touch",
+              "href": "/about/#contact",
+              "variant": "primary"
+            }
+          ],
+          "image": {
+            "src": "assets/team.jpg",
+            "alt": "A dark team test image"
+          }
+        },
+        {
+          "type": "steps",
+          "anchor": "how",
+          "band": "panel",
+          "title": "How it works.",
+          "steps": [
+            {
+              "title": "Tell us",
+              "body": "Share what you need."
+            },
+            {
+              "title": "We build",
+              "body": "We make it."
+            },
+            {
+              "title": "You launch",
+              "body": "It goes live."
+            }
+          ]
+        },
+        {
+          "type": "offers",
+          "title": "Our offers.",
+          "columns": 3,
+          "items": [
+            {
+              "image": {
+                "src": "assets/photo.jpg",
+                "alt": "An orange test photo"
+              },
+              "badge": "Popular",
+              "title": "Starter",
+              "body": "Everything you need to begin.",
+              "price": "$49",
+              "priceNote": "per month",
+              "cta": {
+                "label": "Choose Starter",
+                "href": "/services/",
+                "variant": "secondary"
+              }
+            },
+            {
+              "title": "Growth",
+              "body": "For teams that are scaling up.",
+              "price": "$149",
+              "priceNote": "per month",
+              "cta": {
+                "label": "Choose Growth",
+                "href": "/services/",
+                "variant": "primary"
+              }
+            },
+            {
+              "image": {
+                "src": "assets/banner.webp",
+                "alt": "A green WebP test banner"
+              },
+              "title": "Custom",
+              "body": "A plan built around you."
+            }
+          ]
+        },
+        {
+          "type": "gallery",
+          "title": "A look around.",
+          "columns": 4,
+          "images": [
+            {
+              "src": "assets/hero.png",
+              "alt": "Blue image",
+              "caption": "Blue"
+            },
+            {
+              "src": "assets/photo.jpg",
+              "alt": "Orange image",
+              "caption": "Orange"
+            },
+            {
+              "src": "assets/banner.webp",
+              "alt": "Green image"
+            },
+            {
+              "src": "assets/team.jpg",
+              "alt": "Dark image",
+              "caption": "Dark"
+            }
+          ]
+        },
+        {
+          "type": "testimonial",
+          "quote": "They finished early and the result looks better than we imagined.",
+          "name": "Sam Rivera",
+          "role": "Founder, Example Ltd",
+          "avatar": {
+            "src": "assets/avatar.png",
+            "alt": "Portrait of Sam Rivera"
+          }
+        },
+        {
+          "type": "team",
+          "band": "surface",
+          "title": "Meet the team.",
+          "members": [
+            {
+              "photo": {
+                "src": "assets/avatar.png",
+                "alt": "Portrait of Alex"
+              },
+              "name": "Alex Kim",
+              "role": "Founder",
+              "bio": "Starts every project by listening."
+            },
+            {
+              "photo": {
+                "src": "assets/team.jpg",
+                "alt": "Portrait of Jo"
+              },
+              "name": "Jo Park",
+              "role": "Design lead"
+            },
+            {
+              "name": "Chris Lee",
+              "role": "Engineer",
+              "bio": "Keeps the site fast."
+            }
+          ]
+        },
+        {
+          "type": "pageCards",
+          "title": "Explore more.",
+          "group": "main",
+          "excludeCurrent": true,
+          "columns": 3,
+          "linkLabel": "Learn more"
+        },
+        {
+          "type": "steps",
+          "title": "SHOULD-NOT-RENDER hidden section",
+          "hidden": true,
+          "steps": [
+            {
+              "title": "One",
+              "body": "Hidden."
+            },
+            {
+              "title": "Two",
+              "body": "Hidden."
+            }
+          ]
+        },
+        {
+          "type": "faq",
+          "anchor": "faq",
+          "title": "Questions, answered.",
+          "items": [
+            {
+              "q": "Can sections be hidden?",
+              "a": "Yes. A hidden section stays in the file but never appears on the page."
+            },
+            {
+              "q": "Do images need alt text?",
+              "a": "Yes, every image needs a description for people who cannot see it."
+            }
+          ]
+        },
+        {
+          "type": "ctaPanel",
+          "anchor": "get-started",
+          "title": "Ready when you are.",
+          "lede": "Tell us about your project.",
+          "ctas": [
+            {
+              "label": "Contact us",
+              "href": "/about/#contact",
+              "variant": "primary"
+            }
+          ]
+        }
+      ]
+    },
+    "/about/": {
+      "seo": {
+        "description": "About Fixture Co and how to contact the team.",
+        "title": "About"
+      },
+      "breadcrumb": "About",
+      "card": {
+        "group": "main",
+        "title": "About us",
+        "summary": "Who we are and how to reach us.",
+        "icon": "users",
+        "order": 1
+      },
+      "sections": [
+        {
+          "type": "hero",
+          "layout": "centered",
+          "title": "About Fixture Co.",
+          "lede": "Who we are and how to reach us."
+        },
+        {
+          "type": "richText",
+          "title": "Our story",
+          "lede": "Rendered from Markdown.",
+          "body": "We started in **2014** with one idea: make good things simple.\n\n## What we believe\n\n- Plain words\n- Honest prices\n- [Our services](/services/)\n\n### Safe by design\n\n<script>alert('x')</script>\n\n[Unsafe link](javascript:alert(1)) and [safe link](https://example.com).\n\n| Year | Milestone |\n|---|---|\n| 2014 | Founded |\n| 2024 | 500th project |"
+        },
+        {
+          "type": "contact",
+          "anchor": "contact",
+          "band": "surface",
+          "title": "Get in touch.",
+          "email": "hello@example.com",
+          "phone": "+1 555 010 2030",
+          "address": "1 Example Street\nSpringfield",
+          "hours": ["Mon-Fri 9:00-17:00", "Sat 10:00-14:00"],
+          "ctas": [
+            {
+              "label": "Email us",
+              "href": "mailto:hello@example.com",
+              "variant": "primary"
+            }
+          ],
+          "emailLabel": "Email",
+          "phoneLabel": "Phone",
+          "addressLabel": "Address",
+          "hoursLabel": "Opening hours"
+        }
+      ]
+    },
+    "/services/": {
+      "seo": {
+        "description": "Fixture Co services, pricing and plan comparison.",
+        "title": "Services"
+      },
+      "breadcrumb": "Services",
+      "card": {
+        "group": "main",
+        "title": "Services",
+        "summary": "Plans, pricing and comparison.",
+        "icon": "layers",
+        "order": 2
+      },
+      "sections": [
+        {
+          "type": "hero",
+          "layout": "centered",
+          "title": "Services and pricing.",
+          "lede": "Pick a plan or ask for a custom one."
+        },
+        {
+          "type": "pricingTable",
+          "title": "Simple pricing.",
+          "plans": [
+            {
+              "name": "Starter",
+              "price": "$49",
+              "period": "/ month",
+              "summary": "For small projects.",
+              "features": ["One site", "Email support"],
+              "cta": {
+                "label": "Choose Starter",
+                "href": "/about/#contact",
+                "variant": "secondary"
+              },
+              "highlight": false
+            },
+            {
+              "name": "Growth",
+              "price": "$149",
+              "period": "/ month",
+              "summary": "For growing teams.",
+              "features": ["Five sites", "Priority support", "Reports"],
+              "cta": {
+                "label": "Choose Growth",
+                "href": "/about/#contact",
+                "variant": "primary"
+              },
+              "highlight": true,
+              "highlightLabel": "Most popular"
+            }
+          ]
+        },
+        {
+          "type": "comparisonTable",
+          "band": "surface",
+          "title": "Compare plans.",
+          "columns": [
+            {
+              "name": "Starter",
+              "highlight": false
+            },
+            {
+              "name": "Growth",
+              "highlight": true
+            }
+          ],
+          "groups": [
+            {
+              "label": "Basics",
+              "rows": [
+                {
+                  "label": "Sites",
+                  "values": ["1", "5"]
+                },
+                {
+                  "label": "Support",
+                  "values": [true, true]
+                },
+                {
+                  "label": "Reports",
+                  "values": [false, true]
+                }
+              ]
+            }
+          ],
+          "yesLabel": "Included",
+          "noLabel": "Not included"
+        }
+      ]
+    },
+    "/privacy/": {
+      "seo": {
+        "description": "How Fixture Co handles your information.",
+        "title": "Privacy"
+      },
+      "breadcrumb": "Privacy",
+      "sections": [
+        {
+          "type": "hero",
+          "layout": "centered",
+          "title": "Privacy policy.",
+          "lede": "How we handle your information."
+        },
+        {
+          "type": "richText",
+          "title": "Privacy policy",
+          "body": "## What we collect\n\nOnly what you send us.\n\n## How long we keep it\n\nAs long as you are a customer."
+        }
+      ]
+    }
+  },
+  "forms": {}
+}

@@ -1,0 +1,70 @@
+# Try the Claude site generator without creating a customer repo.
+# Actions > "Generate a test site" > Run workflow: pick a sample brief or paste your own JSON.
+# It writes the site into this run only, builds it and attaches site.json, the pictures and the
+# built website as downloadable files. Costs one Claude request (about $1 to $3); needs the
+# repository secret ANTHROPIC_API_KEY.
+name: Generate a test site
+run-name: generate-test ${{ inputs.sample }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      sample:
+        description: Sample brief to use (ignored when you paste your own below)
+        type: choice
+        default: bakery
+        options: [bakery, saas, consultancy, studio, fitness]
+      brief:
+        description: Optional, your own brief as JSON (see scripts/generate/brief.mjs for the fields)
+        required: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: generate-test
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    if: github.event.repository.is_template
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Write the website with Claude
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          BRIEF_JSON: ${{ inputs.brief }}
+          SAMPLE: ${{ inputs.sample }}
+        run: |
+          [ -n "$ANTHROPIC_API_KEY" ] || { echo "::error::The repository secret ANTHROPIC_API_KEY is not set."; exit 1; }
+          if [ -n "$BRIEF_JSON" ]; then
+            pnpm generate
+          else
+            pnpm generate --brief "scripts/generate/samples/$SAMPLE.json"
+          fi
+
+      - name: Check the site
+        run: |
+          pnpm validate
+          node scripts/check-publish.mjs || echo "::notice::Some text still says [Pending: ...]; that is expected until the owner fills it in."
+
+      - name: Build
+        run: pnpm build
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: generated-site
+          path: |
+            site.json
+            assets/
+            apps/website/dist/
+          retention-days: 7

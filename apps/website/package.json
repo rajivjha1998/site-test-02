@@ -1,0 +1,19 @@
+{
+  "name": "@blackboxops/website",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build --force",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@astrojs/sitemap": "^3.7.4",
+    "@blackboxops/ui": "workspace:*",
+    "astro": "^7.3.6",
+    "image-size": "2.0.4"
+  }
+}

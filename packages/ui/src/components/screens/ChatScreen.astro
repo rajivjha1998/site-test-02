@@ -1,0 +1,155 @@
+---
+import type { ScreenOf } from '../../schemas/screen';
+
+type Props = ScreenOf<'chat'>;
+const { context, messages, composer } = Astro.props;
+---
+
+<div class="chat" data-chat>
+  {context && <p class="context">{context}</p>}
+  <ol class="messages">
+    {messages.map((m, i) => (
+      <li class:list={['msg', m.role]} style={`--i: ${i}`}>
+        <p>{m.text}</p>
+        {m.card && (
+          <div class="card">
+            <p class="card-title">{m.card.title}</p>
+            <dl>
+              {m.card.rows.map(([k, v]) => (
+                <div>
+                  <dt>{k}</dt>
+                  <dd>{v}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        )}
+      </li>
+    ))}
+  </ol>
+  <div class="composer" aria-hidden="true">
+    <span>{composer}</span>
+    <span class="send">↑</span>
+  </div>
+</div>
+
+<style>
+  .chat {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .context {
+    justify-self: start;
+    padding: 4px 10px;
+    border-radius: var(--r-pill);
+    background: var(--panel);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--muted);
+  }
+
+  .messages {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .msg {
+    max-width: 88%;
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 12.5px;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  .user {
+    justify-self: end;
+    background: var(--inverse);
+    color: var(--on-inverse);
+  }
+
+  .assistant {
+    justify-self: start;
+    border: 1px solid var(--hair);
+    background: var(--surface);
+  }
+
+  .card {
+    margin-top: var(--space-2);
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--accent-bg);
+  }
+
+  .card-title {
+    margin-bottom: 4px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--accent-text);
+  }
+
+  dl {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+  }
+
+  dl div {
+    display: flex;
+    justify-content: space-between;
+    gap: var(--space-3);
+  }
+
+  dt {
+    color: var(--text);
+  }
+
+  dd {
+    margin: 0;
+    color: var(--ink);
+  }
+
+  .composer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    padding: 9px 9px 9px 12px;
+    border: 1px solid var(--hair);
+    border-radius: 10px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .send {
+    display: grid;
+    place-items: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: var(--inverse);
+    color: var(--on-inverse);
+  }
+
+  /* The one orchestrated moment: messages arrive in order when the window scrolls into view. */
+  @media (prefers-reduced-motion: no-preference) {
+    :global([data-reveal='pending']) .msg {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+
+    :global([data-reveal='done']) .msg {
+      opacity: 1;
+      transform: none;
+      transition:
+        opacity 0.45s var(--ease-out),
+        transform 0.45s var(--ease-out);
+      transition-delay: calc(var(--i) * 0.7s);
+    }
+  }
+</style>

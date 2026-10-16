@@ -1,0 +1,12 @@
+{
+  "business": "Tracewell",
+  "summary": "Uptime and incident monitoring for small engineering teams.",
+  "offerings": "Website and API checks every minute, status pages, Slack and email alerts, incident timelines. Free plan for 5 checks.",
+  "audience": "Startup engineering teams",
+  "tone": "technical",
+  "goal": "signup",
+  "pages": ["home", "pricing", "faq", "contact"],
+  "color_primary": "#0f766e",
+  "email": "sales@tracewell.example",
+  "keywords": "uptime monitoring, status page"
+}

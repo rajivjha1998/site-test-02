@@ -1,0 +1,49 @@
+---
+import type { IconName } from '../schemas/common';
+import Icon from './Icon.astro';
+
+interface Props {
+  name: IconName;
+  size?: 'sm' | 'md' | 'lg';
+}
+
+const { name, size = 'md' } = Astro.props;
+const iconSize = { sm: 18, md: 22, lg: 26 }[size];
+---
+
+<span class:list={['tile', size]} aria-hidden="true">
+  <Icon name={name} size={iconSize} />
+</span>
+
+<style>
+  /* One icon treatment site-wide: a soft blue tile with a hairline and a light inner highlight. */
+  .tile {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    border: 1px solid color-mix(in srgb, var(--accent) 18%, transparent);
+    background: linear-gradient(160deg, var(--surface) 0%, var(--accent-bg) 100%);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.7),
+      0 6px 14px -10px color-mix(in srgb, var(--accent) 60%, transparent);
+    color: var(--accent-text);
+  }
+
+  .sm {
+    width: 34px;
+    height: 34px;
+    border-radius: 9px;
+  }
+
+  .md {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+  }
+
+  .lg {
+    width: 54px;
+    height: 54px;
+    border-radius: 14px;
+  }
+</style>

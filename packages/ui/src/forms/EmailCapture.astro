@@ -1,0 +1,224 @@
+---
+// One email field and a button: the lowest-effort way to become a lead. With JavaScript the
+// email is saved at once as step 1 of `form` (a partial lead) and the visitor continues to
+// `continueTo`, where the full form opens on step 2. Without JavaScript it is a plain link
+// to `continueTo?email=…`.
+import type { FormDefinition } from '../schemas/form';
+import { fieldMessages } from './validate';
+import { HONEYPOT_FIELD, STAGE_FIELD, SUBMISSION_ID_FIELD } from './handle-submission';
+import Button from '../primitives/Button.astro';
+import { withBase } from '../lib/href';
+
+interface Props {
+  /** Unique on the page (e.g. the section uid), for field ids. */
+  uid: string;
+  form: FormDefinition;
+  /** Page holding the full form, e.g. /demo/. */
+  continueTo: string;
+  label: string;
+  placeholder?: string;
+  note?: string;
+  formsOrigin?: string;
+  align?: 'start' | 'center';
+  /** Accessible label for the email field. */
+  fieldLabel?: string;
+}
+
+const {
+  uid,
+  form,
+  continueTo,
+  label,
+  placeholder = 'Work email',
+  note,
+  formsOrigin,
+  align = 'start',
+  fieldLabel = 'Work email',
+} = Astro.props;
+
+const email = form.fields.find((f) => f.type === 'email');
+if (!email || form.steps?.[0]?.fields.join() !== email.name) {
+  throw new Error(`EmailCapture: form "${form.id}" needs a first step with only its email field`);
+}
+const m = fieldMessages(email);
+const endpoint = formsOrigin
+  ? `${formsOrigin.replace(/\/$/, '')}${form.submit.endpoint}`
+  : withBase(form.submit.endpoint);
+const id = `capture-${uid}`;
+---
+
+<form
+  class:list={['capture', align]}
+  action={withBase(continueTo)}
+  method="get"
+  data-email-capture
+  data-endpoint={endpoint}
+  data-field={email.name}
+  data-stage-field={STAGE_FIELD}
+  data-sid-field={SUBMISSION_ID_FIELD}
+  data-honeypot={HONEYPOT_FIELD}
+  data-form-id={form.id}
+>
+  <div class="row">
+    <label class="visually-hidden" for={id}>
+      {fieldLabel}
+    </label>
+    <input
+      id={id}
+      name="email"
+      type="email"
+      required
+      autocomplete="email"
+      placeholder={placeholder}
+      aria-describedby={`${id}-error`}
+      data-msg-required={m.required}
+      data-msg-email={m.email}
+    />
+    <Button type="submit">{label}</Button>
+  </div>
+  <p class="error" id={`${id}-error`} data-error></p>
+  {note && <p class="note">{note}</p>}
+</form>
+
+<script>
+  const newId = () =>
+    crypto.randomUUID?.() ??
+    `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+
+  for (const capture of document.querySelectorAll<HTMLFormElement>('[data-email-capture]')) {
+    const input = capture.querySelector<HTMLInputElement>('input[type="email"]')!;
+    const error = capture.querySelector<HTMLElement>('[data-error]')!;
+    capture.noValidate = true;
+
+    // Known email (from the link or earlier this session): fill it in so nobody types it twice.
+    try {
+      const known =
+        new URLSearchParams(location.search).get('email') ??
+        JSON.parse(sessionStorage.getItem(`bbo-form-${capture.dataset.formId}`) ?? 'null')
+          ?.values?.[capture.dataset.field ?? 'email'];
+      if (known && !input.value) input.value = known;
+    } catch {
+      /* storage unavailable */
+    }
+
+    capture.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!input.checkValidity()) {
+        error.textContent = input.validity.valueMissing
+          ? (input.dataset.msgRequired ?? '')
+          : (input.dataset.msgEmail ?? '');
+        input.setAttribute('aria-invalid', 'true');
+        input.focus();
+        return;
+      }
+
+      const d = capture.dataset;
+      const sid = newId();
+      const data = new FormData();
+      data.append(d.field ?? 'email', input.value.trim());
+      data.append(d.stageField ?? '_stage', 'partial');
+      data.append(d.sidField ?? '_sid', sid);
+      // keepalive lets the save finish while the browser moves to the next page.
+      fetch(d.endpoint!, {
+        method: 'POST',
+        body: data,
+        headers: { Accept: 'application/json' },
+        keepalive: true,
+      }).catch(() => undefined);
+      try {
+        localStorage.setItem('bbo-lead', '1');
+        sessionStorage.setItem(
+          `bbo-form-${d.formId}`,
+          JSON.stringify({ sid, values: { [d.field ?? 'email']: input.value.trim() } }),
+        );
+      } catch {
+        /* storage unavailable */
+      }
+
+      const next = new URL(capture.action);
+      next.searchParams.set('email', input.value.trim());
+      next.searchParams.set('sid', sid);
+      location.href = next.href;
+    });
+  }
+</script>
+
+<style>
+  .capture {
+    display: grid;
+    gap: var(--space-2);
+    width: 100%;
+    max-width: 460px;
+  }
+
+  .center {
+    justify-self: center;
+    margin-inline: auto;
+  }
+
+  .row {
+    display: flex;
+    gap: var(--space-2);
+    padding: 5px;
+    border-radius: calc(var(--r-btn) + 5px);
+    background: var(--glass-bg-strong);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-shadow);
+  }
+
+  input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: var(--r-btn);
+    background: transparent;
+    font-size: 15px;
+    color: var(--ink);
+  }
+
+  input::placeholder {
+    color: var(--muted);
+  }
+
+  input:focus-visible {
+    outline: none;
+    box-shadow: none;
+  }
+
+  .row:focus-within {
+    box-shadow:
+      var(--glass-shadow),
+      0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+  }
+
+  .error {
+    font-size: 13px;
+    color: var(--error-text);
+  }
+
+  .error:empty {
+    display: none;
+  }
+
+  .note {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .center .note,
+  .center .error {
+    text-align: center;
+  }
+
+  @media (max-width: 480px) {
+    .row {
+      flex-direction: column;
+    }
+
+    .row :global(.btn) {
+      width: 100%;
+    }
+  }
+</style>

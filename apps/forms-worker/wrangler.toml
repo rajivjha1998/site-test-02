@@ -1,0 +1,14 @@
+# Forms worker — deploy with `pnpm --filter @blackboxops/forms-worker deploy` (needs a Cloudflare login).
+name = "blackboxops-forms"
+main = "src/index.ts"
+compatibility_date = "2026-10-01"
+
+[vars]
+# The website, including its base path: where no-JS submissions are redirected back to.
+SITE_URL = "https://blackboxops1.github.io/bb_ops_website_v1"
+# Origins allowed to submit from the browser (comma-separated).
+ALLOWED_ORIGINS = "https://blackboxops1.github.io,https://fluffy-adventure-62j9rkr.pages.github.io,https://blackboxops.io"
+
+# Secrets (set once with `npx wrangler secret put <NAME>`, never commit them):
+#   FORM_WEBHOOK_URL  where valid submissions are POSTed as JSON
+#   TURNSTILE_SECRET  Cloudflare Turnstile secret key (optional but recommended)

@@ -1,0 +1,144 @@
+---
+import type { SectionOf } from '../schemas/sections';
+import SectionShell from '../primitives/SectionShell.astro';
+import SectionHeading from '../primitives/SectionHeading.astro';
+import Icon from '../primitives/Icon.astro';
+
+type Props = Omit<SectionOf<'comparisonTable'>, 'type'> & { uid: string };
+const { uid, icon, anchor, title, titleAccent, lede, band, columns, groups, yesLabel, noLabel } =
+  Astro.props;
+const id = `${uid}-title`;
+---
+
+<SectionShell labelledBy={id} band={band} anchor={anchor}>
+  <SectionHeading id={id} icon={icon} title={title} titleAccent={titleAccent} lede={lede} />
+  <!-- Scrolls horizontally inside its own box on narrow screens; the page never does.
+       WCAG: a scrollable region must be keyboard-focusable, which this lint rule doesn't know. -->
+  {/* eslint-disable-next-line astro/jsx-a11y/no-noninteractive-tabindex */}
+  <div class="scroller" tabindex="0" role="region" aria-labelledby={id}>
+    <table>
+      <thead>
+        <tr>
+          <td></td>
+          {columns.map((c) => (
+            <th scope="col" class:list={{ highlight: c.highlight }}>
+              {c.name}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      {groups.map((group) => (
+        <tbody>
+          {group.label && (
+            <tr class="group">
+              <th scope="colgroup" colspan={columns.length + 1}>
+                {group.label}
+              </th>
+            </tr>
+          )}
+          {group.rows.map((row) => (
+            <tr>
+              <th scope="row">{row.label}</th>
+              {columns.map((c, i) => {
+                const value = row.values[i];
+                return (
+                  <td class:list={{ highlight: c.highlight }}>
+                    {value === true ? (
+                      <span class="yes" role="img" aria-label={yesLabel}>
+                        <Icon name="check" size={18} />
+                      </span>
+                    ) : value === false || value === undefined ? (
+                      <span class="no" role="img" aria-label={noLabel}>
+                        <Icon name="minus" size={16} />
+                      </span>
+                    ) : (
+                      value
+                    )}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      ))}
+    </table>
+  </div>
+</SectionShell>
+
+<style>
+  .scroller {
+    margin-top: var(--space-7);
+    overflow-x: auto;
+    border-radius: var(--r-win);
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid transparent;
+    box-shadow: var(--glass-shadow);
+  }
+
+  table {
+    width: 100%;
+    min-width: 640px;
+    border-collapse: collapse;
+    font-size: 14.5px;
+  }
+
+  th,
+  td {
+    padding: 13px var(--space-4);
+    border-bottom: 1px solid var(--hair-soft);
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  thead th {
+    font-family: var(--font-display);
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+
+  th[scope='row'] {
+    font-weight: 400;
+    color: var(--ink);
+    text-align: start;
+  }
+
+  tbody tr:last-child > * {
+    border-bottom: 0;
+  }
+
+  .group th {
+    padding-top: var(--space-5);
+    background: var(--panel);
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    font-weight: 400;
+    color: var(--muted);
+    text-align: start;
+  }
+
+  .highlight {
+    background: color-mix(in srgb, var(--accent-bg) 60%, var(--surface));
+  }
+
+  .yes,
+  .no {
+    display: inline-grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    vertical-align: middle;
+  }
+
+  .yes {
+    background: var(--accent-bg);
+    color: var(--accent-text);
+  }
+
+  .no {
+    color: var(--muted);
+  }
+</style>

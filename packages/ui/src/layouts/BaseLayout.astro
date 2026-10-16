@@ -1,0 +1,61 @@
+---
+import { Font } from 'astro:assets';
+import Seo from '../components/Seo.astro';
+import type { Entity } from '../schemas/entity';
+import type { SeoInput } from '../lib/seo';
+import '../styles/tokens.css';
+import '../styles/base.css';
+import { withBase } from '../lib/href';
+
+interface Props {
+  entity: Entity;
+  seo: SeoInput;
+  indexable: boolean;
+  /** Accessible label for the skip link; sites pass their own wording. */
+  skipLinkLabel?: string;
+  /** Brand accent tokens from lib/theme.ts `themeCss`; omit for the default palette. */
+  themeCss?: string;
+  /** Root-relative browser-tab icon. */
+  favicon?: string;
+}
+
+const {
+  entity,
+  seo,
+  indexable,
+  skipLinkLabel = 'Skip to content',
+  themeCss,
+  favicon = '/favicon.svg',
+} = Astro.props;
+const faviconType = favicon.endsWith('.svg')
+  ? 'image/svg+xml'
+  : favicon.endsWith('.ico')
+    ? 'image/x-icon'
+    : `image/${favicon.split('.').pop()?.replace('jpg', 'jpeg')}`;
+---
+
+<!doctype html>
+<html lang={entity.locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <Font cssVariable="--font-display" preload />
+    <Font cssVariable="--font-body" preload />
+    <Font cssVariable="--font-mono" />
+    <link rel="icon" type={faviconType} href={withBase(favicon)} />
+    <link rel="sitemap" href={withBase('/sitemap-index.xml')} />
+    <Seo entity={entity} seo={seo} indexable={indexable} />
+    {themeCss && <style is:inline set:html={themeCss} />}
+    <slot name="head" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">
+      {skipLinkLabel}
+    </a>
+    <slot name="header" />
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <slot name="footer" />
+  </body>
+</html>

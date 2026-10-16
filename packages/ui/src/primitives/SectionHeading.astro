@@ -1,0 +1,76 @@
+---
+import type { IconName } from '../schemas/common';
+import IconTile from './IconTile.astro';
+
+interface Props {
+  id: string;
+  icon?: IconName;
+  title: string;
+  /** Second sentence, rendered in the accent colour (claude-design.md §14). */
+  titleAccent?: string;
+  lede?: string;
+  level?: 1 | 2;
+  align?: 'start' | 'center';
+  size?: 'hero' | 'section';
+}
+
+const {
+  id,
+  icon,
+  title,
+  titleAccent,
+  lede,
+  level = 2,
+  align = 'center',
+  size = 'section',
+} = Astro.props;
+const Tag = level === 1 ? 'h1' : 'h2';
+---
+
+<header class:list={['heading', align, size]}>
+  {icon && <IconTile name={icon} />}
+  <Tag id={id} class="title">
+    {title}
+    {titleAccent && <span class="accent">{` ${titleAccent}`}</span>}
+  </Tag>
+  {lede && <p class="lede">{lede}</p>}
+</header>
+
+<style>
+  .heading {
+    display: grid;
+    gap: var(--space-4);
+  }
+
+  .center {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .title {
+    max-width: 22ch;
+    font-size: var(--fs-h2);
+  }
+
+  .hero .title {
+    max-width: 18ch;
+    font-size: var(--fs-h1);
+    font-weight: 400;
+    line-height: var(--lh-tight);
+  }
+
+  .accent {
+    color: var(--accent);
+  }
+
+  .lede {
+    max-width: 60ch;
+    font-size: var(--fs-lede);
+    line-height: 1.55;
+    text-wrap: balance;
+  }
+
+  .hero .lede {
+    max-width: 52ch;
+  }
+</style>

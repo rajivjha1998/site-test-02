@@ -1,0 +1,64 @@
+---
+// /dev/sections/ — every section variant, rendered from real content.
+// Development only: getStaticPaths returns nothing in production builds. It shows several
+// heroes, so it has several H1s — acceptable for an internal, noindexed preview.
+import SectionRenderer from '@blackboxops/ui/sections/SectionRenderer.astro';
+import type { Section } from '@blackboxops/ui/schemas/sections.ts';
+import SiteLayout from '../../layouts/SiteLayout.astro';
+import { withBase } from '@blackboxops/ui/lib/href.ts';
+import { getPages, renderContext } from '../../lib/site';
+
+export function getStaticPaths() {
+  return import.meta.env.DEV ? [{ params: { page: 'sections' } }] : [];
+}
+
+const path = '/dev/sections/';
+const pages = await getPages();
+const context = await renderContext(path, pages);
+
+// First example of each distinct section variant across the site.
+const variantKey = (s: Section) => {
+  const v = s as Record<string, unknown>;
+  return [s.type, v.layout, v.variant, v.columns, v.groupByTags ? 'grouped' : ''].join('|');
+};
+const examples = new Map<string, { section: Section; from: string }>();
+for (const { page, path: from } of pages) {
+  for (const section of page.sections) {
+    const key = variantKey(section);
+    if (!examples.has(key)) examples.set(key, { section, from });
+  }
+}
+const sorted = [...examples.entries()].sort(([a], [b]) => a.localeCompare(b));
+---
+
+<SiteLayout
+  seo={{
+    title: 'Section library',
+    description: 'Development preview of every section.',
+    path,
+    noindex: true,
+  }}
+>
+  {sorted.map(([key, { section, from }], i) => (
+    <div class="example">
+      <p class="label">
+        {key.split('|').filter(Boolean).join(' · ')} — from <a href={withBase(from)}>{from}</a>
+      </p>
+      <SectionRenderer sections={[section]} context={{ ...context, currentPath: `${path}#${i}` }} />
+    </div>
+  ))}
+</SiteLayout>
+
+<style>
+  .label {
+    padding: var(--space-2) var(--gutter);
+    background: var(--inverse);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--on-inverse);
+  }
+
+  .label a {
+    color: inherit;
+  }
+</style>

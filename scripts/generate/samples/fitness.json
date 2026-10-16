@@ -1,0 +1,13 @@
+{
+  "business": "Ridgeway Fitness",
+  "summary": "Small-group strength and conditioning gym in Bristol.",
+  "offerings": "Group classes, personal training, beginner foundations course, monthly memberships.",
+  "audience": "Adults new to strength training",
+  "tone": "friendly",
+  "goal": "book",
+  "pages": ["home", "about", "pricing", "faq", "contact"],
+  "phone": "+44 117 496 0123",
+  "email": "team@ridgeway.example",
+  "address": "Unit 4, Foundry Yard, Bristol BS2 0AA",
+  "hours": "Mon-Fri 6:00-21:00; Sat 8:00-14:00"
+}

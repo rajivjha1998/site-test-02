@@ -1,0 +1,9 @@
+packages:
+  - apps/*
+  - packages/*
+allowBuilds:
+  esbuild: true
+peerDependencyRules:
+  allowedVersions:
+    # eslint-plugin-astro 3 officially pairs jsx-a11y 6.10.2 with ESLint 10; jsx-a11y's own peer range is stale.
+    eslint-plugin-jsx-a11y>eslint: '10'

@@ -1,0 +1,49 @@
+---
+import type { Entity } from '../schemas/entity';
+import {
+  absoluteUrl,
+  jsonLdGraph,
+  pageTitle,
+  seoProblems,
+  serializeJsonLd,
+  type SeoInput,
+} from '../lib/seo';
+
+interface Props {
+  entity: Entity;
+  seo: SeoInput;
+  /** False until launch: every page is noindex and robots.txt disallows crawling. */
+  indexable: boolean;
+}
+
+const { entity, seo, indexable } = Astro.props;
+
+const title = pageTitle(entity.name, seo.title);
+const problems = seoProblems(title, seo.description);
+if (problems.length > 0) {
+  throw new Error(`SEO check failed for ${seo.path}:\n- ${problems.join('\n- ')}`);
+}
+
+const canonical = absoluteUrl(seo.path, entity.url);
+const image = seo.image ?? entity.ogImage;
+const imageUrl = image ? absoluteUrl(image, entity.url) : undefined;
+const robots =
+  !indexable || seo.noindex ? 'noindex, nofollow' : 'index, follow, max-image-preview:large';
+const jsonLd = serializeJsonLd(jsonLdGraph(entity, seo));
+---
+
+<title>{title}</title>
+<meta name="description" content={seo.description} />
+<link rel="canonical" href={canonical} />
+<meta name="robots" content={robots} />
+
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={entity.name} />
+<meta property="og:title" content={title} />
+<meta property="og:description" content={seo.description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:locale" content={entity.locale} />
+{imageUrl && <meta property="og:image" content={imageUrl} />}
+<meta name="twitter:card" content={imageUrl ? 'summary_large_image' : 'summary'} />
+
+<script is:inline type="application/ld+json" set:html={jsonLd} />

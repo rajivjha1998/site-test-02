@@ -1,0 +1,482 @@
+---
+import type { Navigation } from '../schemas/site';
+import Logo from './Logo.astro';
+import IconTile from '../primitives/IconTile.astro';
+import Button from '../primitives/Button.astro';
+import { withBase } from '../lib/href';
+import CaptureGate from './CaptureGate.astro';
+import type { FormDefinition } from '../schemas/form';
+
+interface Props {
+  nav: Navigation;
+  siteName: string;
+  /** Root-relative logo file; omit for a text wordmark. */
+  logo?: string;
+  currentPath: string;
+  /** All site forms, for email gates on nav items. */
+  forms?: Record<string, FormDefinition>;
+  formsOrigin?: string;
+}
+
+const { nav, siteName, logo, currentPath, forms = {}, formsOrigin } = Astro.props;
+const gates = nav.items.flatMap((item) => {
+  if (!item.gate) return [];
+  const form = forms[item.gate.form];
+  if (!form) throw new Error(`Nav gate: unknown form "${item.gate.form}"`);
+  return [{ ...item.gate, href: item.href, form }];
+});
+const isCurrent = (href: string) => href !== '/' && currentPath.startsWith(href);
+---
+
+<header class="nav" data-nav>
+  <div class="bar">
+    <a class="home" href={withBase('/')} aria-label={`${siteName} — ${nav.labels.home}`}>
+      <Logo name={siteName} src={logo} />
+    </a>
+
+    <nav class="desktop" aria-label={nav.labels.primaryNav}>
+      <ul class="items">
+        {nav.items.map((item) =>
+          item.menu ? (
+            <li>
+              <details class="dropdown" data-dropdown>
+                <summary class:list={['item', { current: isCurrent(item.href) }]}>
+                  {item.label}
+                  <span class="chev" aria-hidden="true" />
+                </summary>
+                <div class="mega" style={`--cols: ${item.menu.columns.length}`}>
+                  {item.menu.columns.map((col) => (
+                    <div class="col">
+                      <p class="col-heading">{col.heading}</p>
+                      <ul>
+                        {col.links.map((link) => (
+                          <li>
+                            <a
+                              href={withBase(link.href)}
+                              aria-current={currentPath === link.href ? 'page' : undefined}
+                            >
+                              {link.icon && <IconTile name={link.icon} size="sm" />}
+                              <span class="link-text">
+                                <span class="link-label">{link.label}</span>
+                                {link.description && (
+                                  <span class="link-desc">{link.description}</span>
+                                )}
+                              </span>
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </details>
+            </li>
+          ) : (
+            <li>
+              <a
+                class:list={['item', { current: isCurrent(item.href) }]}
+                href={withBase(item.href)}
+                aria-current={currentPath === item.href ? 'page' : undefined}
+              >
+                {item.label}
+              </a>
+            </li>
+          ),
+        )}
+      </ul>
+    </nav>
+
+    <div class="actions">
+      {nav.actions.map((a) => (
+        <Button href={a.href} variant={a.variant} size="sm">
+          {a.label}
+        </Button>
+      ))}
+    </div>
+
+    <!-- Phone menu: a native disclosure, so it works without JavaScript. -->
+    <details class="mobile" data-mobile-menu>
+      <summary class="burger">
+        <span class="visually-hidden">{nav.labels.menu}</span>
+        <span class="lines" aria-hidden="true">
+          <i></i>
+          <i></i>
+        </span>
+      </summary>
+      <nav class="sheet" aria-label={nav.labels.primaryNav}>
+        <ul>
+          {nav.items.map((item) =>
+            item.menu ? (
+              <li>
+                <details class="group">
+                  <summary>{item.label}</summary>
+                  {item.menu.columns.map((col) => (
+                    <div class="sheet-col">
+                      <p class="col-heading">{col.heading}</p>
+                      <ul>
+                        {col.links.map((link) => (
+                          <li>
+                            <a href={withBase(link.href)}>{link.label}</a>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </details>
+              </li>
+            ) : (
+              <li>
+                <a class="sheet-link" href={withBase(item.href)}>
+                  {item.label}
+                </a>
+              </li>
+            ),
+          )}
+        </ul>
+        <div class="sheet-actions">
+          {nav.actions.map((a) => (
+            <Button href={a.href} variant={a.variant}>
+              {a.label}
+            </Button>
+          ))}
+        </div>
+      </nav>
+    </details>
+  </div>
+  {gates.map((g) => (
+    <CaptureGate
+      href={g.href}
+      form={g.form}
+      title={g.title}
+      lede={g.lede}
+      label={g.label}
+      formsOrigin={formsOrigin}
+    />
+  ))}
+</header>
+
+<script>
+  // Enhancements only: one dropdown open at a time, close on Escape or outside click.
+  const dropdowns = [
+    ...document.querySelectorAll<HTMLDetailsElement>('[data-dropdown], [data-mobile-menu]'),
+  ];
+  const closeAll = (except?: HTMLDetailsElement) =>
+    dropdowns.forEach((d) => {
+      if (d !== except) d.open = false;
+    });
+
+  dropdowns.forEach((d) =>
+    d.addEventListener('toggle', () => {
+      if (d.open) closeAll(d);
+      if (d.matches('[data-mobile-menu]'))
+        document.documentElement.classList.toggle('menu-open', d.open);
+    }),
+  );
+  document.addEventListener('click', (e) => {
+    if (!dropdowns.some((d) => d.contains(e.target as Node))) closeAll();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    const open = dropdowns.find((d) => d.open);
+    if (open) {
+      open.open = false;
+      open.querySelector('summary')?.focus();
+    }
+  });
+</script>
+
+<style>
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-bottom: 1px solid var(--hair);
+  }
+
+  /* The frosted background lives on a pseudo-element: a backdrop-filter on .nav itself would
+     become the containing block for the fixed phone menu and clip it to the bar's height. */
+  .nav::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: var(--glass-bg-strong);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+  }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: var(--space-6);
+    max-width: var(--container);
+    height: 60px;
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  .home {
+    flex: none;
+    border-radius: 4px;
+    text-decoration: none;
+  }
+
+  .desktop {
+    flex: 1;
+  }
+
+  .items {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 10px;
+    border-radius: 7px;
+    font-size: var(--fs-small);
+    color: color-mix(in srgb, var(--ink) 80%, transparent);
+    text-decoration: none;
+    list-style: none;
+    cursor: pointer;
+  }
+
+  .item::-webkit-details-marker {
+    display: none;
+  }
+
+  .item:hover,
+  .dropdown[open] > .item {
+    background: var(--subtle);
+    color: var(--ink);
+  }
+
+  .current {
+    color: var(--ink);
+  }
+
+  .chev {
+    width: 6px;
+    height: 6px;
+    margin-top: -3px;
+    border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg);
+    transition: transform var(--dur-fast) ease;
+  }
+
+  .dropdown[open] .chev {
+    margin-top: 3px;
+    transform: rotate(225deg);
+  }
+
+  .dropdown {
+    position: relative;
+  }
+
+  .mega {
+    position: absolute;
+    top: calc(100% + 10px);
+    left: -12px;
+    display: grid;
+    grid-template-columns: repeat(var(--cols), minmax(170px, 1fr));
+    gap: var(--space-6);
+    width: max-content;
+    max-width: min(860px, calc(100vw - 2 * var(--gutter)));
+    padding: var(--space-5);
+    border-radius: 14px;
+    background: var(--glass-bg-strong);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid transparent;
+    box-shadow: var(--glass-shadow);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .dropdown[open] > .mega {
+      animation: menu-in 0.2s var(--ease-out);
+    }
+
+    @keyframes menu-in {
+      from {
+        opacity: 0;
+        transform: translateY(-6px) scale(0.985);
+      }
+    }
+  }
+
+  .col-heading {
+    margin-bottom: var(--space-2);
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    color: var(--muted);
+  }
+
+  .col ul,
+  .sheet-col ul {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .col a {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-inline: -8px;
+    padding: 7px 8px;
+    border-radius: 10px;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .link-text {
+    display: grid;
+    gap: 1px;
+  }
+
+  .col a:hover {
+    background: var(--panel);
+  }
+
+  .link-label {
+    font-size: var(--fs-small);
+  }
+
+  .link-desc {
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+
+  .actions {
+    display: flex;
+    gap: var(--space-2);
+    margin-inline-start: auto;
+  }
+
+  .mobile {
+    display: none;
+  }
+
+  @media (max-width: 960px) {
+    .desktop,
+    .actions {
+      display: none;
+    }
+
+    .mobile {
+      display: block;
+      margin-inline-start: auto;
+    }
+
+    .burger {
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      list-style: none;
+      cursor: pointer;
+    }
+
+    .burger::-webkit-details-marker {
+      display: none;
+    }
+
+    .lines {
+      display: grid;
+      gap: 6px;
+      width: 20px;
+    }
+
+    .lines i {
+      display: block;
+      height: 1.6px;
+      background: var(--ink);
+      transition: transform var(--dur) var(--ease-out);
+    }
+
+    .mobile[open] .lines i:first-child {
+      transform: translateY(3.8px) rotate(45deg);
+    }
+
+    .mobile[open] .lines i:last-child {
+      transform: translateY(-3.8px) rotate(-45deg);
+    }
+
+    .sheet {
+      position: fixed;
+      inset: 61px 0 0;
+      display: grid;
+      grid-template-rows: 1fr auto;
+      overflow-y: auto;
+      padding: var(--space-4) var(--gutter) var(--space-6);
+      background: var(--surface);
+    }
+
+    .sheet > ul {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .sheet > ul > li {
+      border-bottom: 1px solid var(--hair);
+    }
+
+    .group > summary,
+    .sheet-link {
+      display: flex;
+      justify-content: space-between;
+      padding: var(--space-4) 0;
+      font-family: var(--font-display);
+      font-size: 20px;
+      color: var(--ink);
+      text-decoration: none;
+      list-style: none;
+      cursor: pointer;
+    }
+
+    .group > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .group > summary::after {
+      content: '+';
+      color: var(--accent);
+    }
+
+    .group[open] > summary::after {
+      content: '−';
+    }
+
+    .sheet-col {
+      padding-bottom: var(--space-4);
+    }
+
+    .sheet-col a {
+      display: block;
+      padding: 8px 0;
+      color: var(--ink);
+      text-decoration: none;
+    }
+
+    .sheet-actions {
+      display: grid;
+      gap: var(--space-2);
+      padding-top: var(--space-5);
+    }
+
+    :global(html.menu-open) {
+      overflow: hidden;
+    }
+  }
+</style>

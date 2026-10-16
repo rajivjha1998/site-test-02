@@ -1,0 +1,247 @@
+---
+import type { ResolvedMediaData } from '../lib/resolve';
+import Screen from './screens/Screen.astro';
+
+export type ResolvedMedia = ResolvedMediaData;
+
+interface Props {
+  media: ResolvedMedia;
+  /** Accessible name for the view switcher. */
+  switcherLabel?: string;
+}
+
+const { media, switcherLabel = 'Choose a view' } = Astro.props;
+const multi = media.screens.length > 1;
+---
+
+<figure class="pw" data-product-window data-autoplay={media.autoplay && multi ? 'true' : undefined}>
+  {multi && (
+    <div class="switcher" role="group" aria-label={switcherLabel}>
+      {media.screens.map((s, i) => (
+        <button type="button" aria-pressed={i === 0 ? 'true' : 'false'} data-view={i}>
+          {s.label}
+        </button>
+      ))}
+    </div>
+  )}
+  <!-- Illustrative mock-up: hidden from assistive tech and search snippets; the caption names it. -->
+  <div class="window" aria-hidden="true" data-nosnippet data-theme="light">
+    <!-- Views share one grid cell, so the window keeps the tallest view's height and never jumps. -->
+    <div class="stack">
+      {media.screens.map(({ screen }, i) => (
+        <div class="panel" data-panel={i} data-active={i === 0 ? 'true' : 'false'}>
+          <div class="bar">
+            <span class="dots">
+              <i />
+              <i />
+              <i />
+            </span>
+            <span class="url">{screen.url}</span>
+          </div>
+          {screen.nav && (
+            <div class="nav">
+              {screen.nav.items.map((item, n) => (
+                <span class:list={{ on: n === screen.nav?.active }}>{item}</span>
+              ))}
+            </div>
+          )}
+          <Screen {...screen} />
+        </div>
+      ))}
+    </div>
+  </div>
+  <figcaption>{media.caption}</figcaption>
+</figure>
+
+<script>
+  // Long enough for a workflow view to play through its run before the next view.
+  const AUTOPLAY_MS = 7000;
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-product-window]')) {
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>('[data-view]')];
+    const panels = [...root.querySelectorAll<HTMLElement>('[data-panel]')];
+    let current = 0;
+
+    const show = (index: number) => {
+      current = index;
+      buttons.forEach((b, i) => b.setAttribute('aria-pressed', String(i === index)));
+      panels.forEach((p, i) => (p.dataset.active = String(i === index)));
+      panels[index]?.dispatchEvent(new CustomEvent('panel:active'));
+      if (panels[index]?.querySelector('[data-chat]')) root.dataset.reveal = 'done';
+    };
+
+    // Autoplay: pauses on hover/focus or when off-screen, stops for good once a view is chosen.
+    let timer: number | undefined;
+    let stopped = !root.dataset.autoplay || reducedMotion;
+    let paused = false;
+    let visible = false;
+    const tick = () => {
+      if (!stopped && !paused && visible && !document.hidden) show((current + 1) % panels.length);
+    };
+    if (!stopped) {
+      timer = window.setInterval(tick, AUTOPLAY_MS);
+      root.addEventListener('pointerenter', () => (paused = true));
+      root.addEventListener('pointerleave', () => (paused = false));
+      root.addEventListener('focusin', () => (paused = true));
+      root.addEventListener('focusout', () => (paused = false));
+      new IntersectionObserver(([entry]) => (visible = Boolean(entry?.isIntersecting)), {
+        threshold: 0.3,
+      }).observe(root);
+    }
+
+    buttons.forEach((button, i) =>
+      button.addEventListener('click', () => {
+        stopped = true;
+        window.clearInterval(timer);
+        show(i);
+      }),
+    );
+
+    // Chat windows reveal their messages once, when scrolled into view.
+    if (root.querySelector('[data-chat]') && 'IntersectionObserver' in window) {
+      root.dataset.reveal = 'pending';
+      const observer = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((e) => e.isIntersecting)) {
+            root.dataset.reveal = 'done';
+            observer.disconnect();
+          }
+        },
+        { threshold: 0.25 },
+      );
+      observer.observe(root);
+    }
+  }
+</script>
+
+<style>
+  .pw {
+    display: grid;
+    gap: var(--space-3);
+    margin: 0;
+    min-width: 0;
+  }
+
+  .switcher {
+    display: inline-flex;
+    justify-self: center;
+    gap: 2px;
+    padding: 3px;
+    border-radius: 9px;
+    background: var(--glass-bg);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid transparent;
+    box-shadow: var(--glass-shadow);
+  }
+
+  .switcher button {
+    padding: 6px 12px;
+    border: 0;
+    border-radius: 7px;
+    background: none;
+    font-size: 13px;
+    color: var(--text);
+    cursor: pointer;
+  }
+
+  .switcher button[aria-pressed='true'] {
+    background: var(--surface);
+    color: var(--ink);
+    box-shadow: 0 1px 2px rgb(28 28 30 / 0.08);
+  }
+
+  .window {
+    overflow: hidden;
+    border-radius: var(--r-win);
+    text-align: start;
+    /* Window content is light UI regardless of the band it sits on. */
+    color-scheme: light;
+    /* Screens adapt to the window's width, not the viewport's. */
+    container-type: inline-size;
+    background: var(--glass-bg-strong);
+    -webkit-backdrop-filter: var(--glass-blur);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid transparent;
+    box-shadow: var(--glass-shadow), var(--sh-win);
+  }
+
+  .stack {
+    display: grid;
+  }
+
+  .panel {
+    grid-area: 1 / 1;
+    transition:
+      opacity 0.45s var(--ease-out),
+      visibility 0.45s;
+  }
+
+  .panel[data-active='false'] {
+    visibility: hidden;
+    opacity: 0;
+  }
+
+  .bar {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) 48px;
+    align-items: center;
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--hair);
+  }
+
+  .dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .dots i {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--subtle);
+  }
+
+  .url {
+    overflow: hidden;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--hair-soft);
+  }
+
+  .nav span {
+    padding: 4px 9px;
+    border-radius: 6px;
+    font-size: 11.5px;
+    color: var(--text);
+  }
+
+  .nav .on {
+    background: var(--accent-bg);
+    color: var(--accent-text);
+  }
+
+  figcaption {
+    font-size: 12.5px;
+    color: var(--muted);
+    text-align: center;
+  }
+
+  @media (max-width: 760px) {
+    .url {
+      font-size: 10px;
+    }
+  }
+</style>

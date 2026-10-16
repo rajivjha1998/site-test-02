@@ -1,0 +1,400 @@
+---
+import type { ScreenOf } from '../../schemas/screen';
+import Icon from '../../primitives/Icon.astro';
+
+type Props = ScreenOf<'workflow'>;
+const { name, trigger, nodes, edges, run, runningLabel, result } = Astro.props;
+
+// Grid → coordinates. x is a percentage of the canvas width; y is in rows (each row a fixed
+// height), so the canvas reflows horizontally but node spacing stays readable on phones.
+const cols = Math.max(...nodes.map((n) => n.col)) + 1;
+const rows = Math.max(...nodes.map((n) => n.row)) + 1;
+const byId = new Map(nodes.map((n) => [n.id, n]));
+const X = (col: number) => (col + 0.5) * 100;
+const Y = (row: number) => (row + 0.5) * 100;
+
+const ran = new Set(run);
+const ranEdges = new Set(run.slice(1).map((id, i) => `${run[i]}>${id}`));
+
+const paths = edges.map((e) => {
+  const a = byId.get(e.from)!;
+  const b = byId.get(e.to)!;
+  const [x1, y1, x2, y2] = [X(a.col), Y(a.row), X(b.col), Y(b.row)];
+  const d =
+    a.col === b.col
+      ? `M${x1} ${y1} C${x1 + 45} ${y1} ${x2 + 45} ${y2} ${x2} ${y2}`
+      : `M${x1} ${y1} C${(x1 + x2) / 2} ${y1} ${(x1 + x2) / 2} ${y2} ${x2} ${y2}`;
+  const key = `${e.from}>${e.to}`;
+  return { ...e, d, key, done: ranEdges.has(key), mid: { x: (x1 + x2) / 2, y: (y1 + y2) / 2 } };
+});
+---
+
+<!-- Server-rendered finished (the run's nodes done, branches not taken dimmed, result shown):
+     what search engines, no-JS visitors and reduced-motion users see. The script replays it. -->
+<div
+  class="workflow"
+  data-workflow
+  data-state="done"
+  data-run={run.join(' ')}
+  data-running-label={runningLabel}
+  style={`--cols: ${cols}; --rows: ${rows}`}
+>
+  <div class="head">
+    <p class="name">{name}</p>
+    <p class="trigger-chip">{trigger}</p>
+  </div>
+
+  <div class="canvas">
+    <svg class="edges" viewBox={`0 0 ${cols * 100} ${rows * 100}`} preserveAspectRatio="none">
+      {paths.map((p) => (
+        <path
+          d={p.d}
+          data-edge={p.key}
+          data-state={p.done ? 'done' : 'idle'}
+          vector-effect="non-scaling-stroke"
+        />
+      ))}
+    </svg>
+    {paths
+      .filter((p) => p.label)
+      .map((p) => (
+        <span
+          class="edge-label"
+          style={`left: ${p.mid.x / cols}%; top: calc(${p.mid.y / 100} * var(--cell-h))`}
+        >
+          {p.label}
+        </span>
+      ))}
+    {nodes.map((n) => (
+      <div
+        class:list={['node', n.role]}
+        data-node={n.id}
+        data-state={ran.has(n.id) ? 'done' : 'skipped'}
+        data-label={n.label}
+        data-detail={n.detail}
+        style={`left: ${X(n.col) / cols}%; top: calc(${n.row + 0.5} * var(--cell-h))`}
+      >
+        <span class="tile">
+          <Icon name={n.icon} size={20} />
+          <span class="badge" />
+        </span>
+        <span class="label">{n.label}</span>
+      </div>
+    ))}
+  </div>
+
+  <p class="status" data-status>
+    <span class="status-dot" />
+    <span data-status-text>{result}</span>
+  </p>
+</div>
+
+<script>
+  // Replays the run node by node: the edge into a node flows while it runs, then both settle.
+  const STEP_MS = 900;
+  const HOLD_MS = 2600;
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  for (const root of document.querySelectorAll<HTMLElement>('[data-workflow]')) {
+    if (reduced) continue;
+    const run = (root.dataset.run ?? '').split(' ');
+    const label = root.dataset.runningLabel ?? '';
+    const statusText = root.querySelector<HTMLElement>('[data-status-text]')!;
+    const result = statusText.textContent ?? '';
+    const node = (id: string) => root.querySelector<HTMLElement>(`[data-node="${id}"]`);
+    const edge = (from: string, to: string) =>
+      root.querySelector<SVGElement>(`[data-edge="${from}>${to}"]`);
+    const timers: number[] = [];
+    let visible = false;
+
+    const finish = () => {
+      timers.splice(0).forEach((t) => window.clearTimeout(t));
+      root.dataset.state = 'done';
+      root
+        .querySelectorAll<HTMLElement>('[data-node]')
+        .forEach((n) => (n.dataset.state = run.includes(n.dataset.node!) ? 'done' : 'skipped'));
+      run.slice(1).forEach((id, i) => edge(run[i]!, id)?.setAttribute('data-state', 'done'));
+      statusText.textContent = result;
+    };
+
+    const play = () => {
+      timers.splice(0).forEach((t) => window.clearTimeout(t));
+      root.dataset.state = 'running';
+      root
+        .querySelectorAll<HTMLElement>('[data-node]')
+        .forEach((n) => (n.dataset.state = 'pending'));
+      root
+        .querySelectorAll<SVGElement>('[data-edge]')
+        .forEach((e) => e.setAttribute('data-state', 'idle'));
+      run.forEach((id, i) => {
+        timers.push(
+          window.setTimeout(() => {
+            const n = node(id);
+            if (n) n.dataset.state = 'running';
+            if (i > 0) edge(run[i - 1]!, id)?.setAttribute('data-state', 'active');
+            statusText.textContent = `${label} · ${n?.dataset.label ?? ''} — ${n?.dataset.detail ?? ''}`;
+          }, i * STEP_MS),
+          window.setTimeout(
+            () => {
+              const n = node(id);
+              if (n) n.dataset.state = 'done';
+              if (i > 0) edge(run[i - 1]!, id)?.setAttribute('data-state', 'done');
+            },
+            (i + 1) * STEP_MS,
+          ),
+        );
+      });
+      timers.push(window.setTimeout(finish, run.length * STEP_MS));
+      timers.push(window.setTimeout(() => visible && play(), run.length * STEP_MS + HOLD_MS));
+    };
+
+    new IntersectionObserver(
+      ([entry]) => {
+        const was = visible;
+        visible = Boolean(entry?.isIntersecting);
+        if (visible && !was) play();
+        if (!visible) finish();
+      },
+      { threshold: 0.3 },
+    ).observe(root);
+
+    // ProductWindow announces when this view is switched to, so the run starts from the trigger.
+    root.closest('[data-panel]')?.addEventListener('panel:active', () => visible && play());
+  }
+</script>
+
+<style>
+  .workflow {
+    --cell-h: 112px;
+    --tile: 46px;
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  .name {
+    font-family: var(--font-display);
+    font-size: 16px;
+    color: var(--ink);
+  }
+
+  .trigger-chip {
+    padding: 4px 10px;
+    border-radius: var(--r-pill);
+    background: var(--accent-bg);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--accent-text);
+  }
+
+  /* The canvas: a dotted grid, like an automation editor. */
+  .canvas {
+    position: relative;
+    /* Extra room below the last row for two-line node labels. */
+    height: calc(var(--rows) * var(--cell-h) + 20px);
+    border: 1px solid var(--hair-soft);
+    border-radius: 10px;
+    background-color: var(--panel);
+    background-image: radial-gradient(
+      color-mix(in srgb, var(--ink) 14%, transparent) 1px,
+      transparent 1.2px
+    );
+    background-size: 16px 16px;
+  }
+
+  .edges {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: calc(100% - 20px);
+    overflow: visible;
+  }
+
+  .edges path {
+    fill: none;
+    stroke: color-mix(in srgb, var(--ink) 22%, transparent);
+    stroke-width: 1.6;
+    transition: stroke 0.3s ease;
+  }
+
+  .edges path[data-state='done'] {
+    stroke: color-mix(in srgb, var(--accent) 60%, transparent);
+  }
+
+  .edges path[data-state='active'] {
+    stroke: var(--accent);
+    stroke-width: 2;
+    stroke-dasharray: 6 6;
+  }
+
+  .edge-label {
+    position: absolute;
+    z-index: 1;
+    padding: 1px 6px;
+    border: 1px solid var(--hair);
+    border-radius: var(--r-pill);
+    background: var(--surface);
+    font-family: var(--font-mono);
+    font-size: 9.5px;
+    color: var(--muted);
+    transform: translate(-50%, -50%);
+  }
+
+  .node {
+    position: absolute;
+    z-index: 2;
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+    width: max-content;
+    max-width: calc(100% / var(--cols) - 6px);
+    /* The tile's centre sits exactly on the node's grid point. */
+    transform: translate(-50%, calc(var(--tile) / -2));
+    transition: opacity 0.3s ease;
+  }
+
+  .tile {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: var(--tile);
+    height: var(--tile);
+    border: 1.5px solid var(--hair);
+    border-radius: 12px;
+    background: var(--surface);
+    box-shadow: 0 4px 10px -6px rgb(15 23 42 / 0.25);
+    color: var(--ink);
+    transition:
+      border-color 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+
+  /* Roles: AI agents tinted blue, triggers dark, people warm — readable at a glance. */
+  .agent .tile {
+    background: var(--accent-bg);
+    color: var(--accent-text);
+  }
+
+  .trigger .tile {
+    background: var(--inverse);
+    color: var(--on-inverse);
+  }
+
+  .person .tile {
+    background: color-mix(in srgb, var(--warn) 14%, var(--surface));
+    color: var(--warn-text);
+  }
+
+  .logic .tile {
+    border-radius: 50%;
+  }
+
+  .label {
+    font-size: 11px;
+    line-height: 1.25;
+    color: var(--ink);
+    text-align: center;
+  }
+
+  .badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    display: none;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--surface);
+    border-radius: 50%;
+  }
+
+  .node[data-state='done'] .badge {
+    display: block;
+    background: var(--ok)
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 6.2l2 2 4-4.4' fill='none' stroke='white' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+      center / 12px no-repeat;
+  }
+
+  .node[data-state='running'] .tile {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 18%, transparent);
+  }
+
+  .node[data-state='pending'],
+  .node[data-state='skipped'] {
+    opacity: 0.45;
+  }
+
+  .status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 34px;
+    padding: 8px 12px;
+    border-radius: 9px;
+    background: color-mix(in srgb, var(--ok) 12%, var(--surface));
+    font-size: 12px;
+    color: var(--ok-text);
+  }
+
+  .status-dot {
+    flex: none;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--ok);
+  }
+
+  .workflow[data-state='running'] > .status {
+    background: var(--accent-bg);
+    color: var(--accent-text);
+  }
+
+  .workflow[data-state='running'] > .status .status-dot {
+    background: var(--accent);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .edges path[data-state='active'] {
+      animation: flow 0.6s linear infinite;
+    }
+
+    .node[data-state='running'] .tile {
+      animation: ring 1.2s ease-in-out infinite;
+    }
+
+    @keyframes flow {
+      to {
+        stroke-dashoffset: -12;
+      }
+    }
+
+    @keyframes ring {
+      50% {
+        box-shadow: 0 0 0 7px color-mix(in srgb, var(--accent) 8%, transparent);
+      }
+    }
+  }
+
+  @container (max-width: 520px) {
+    .workflow {
+      --cell-h: 100px;
+      --tile: 38px;
+    }
+
+    .label {
+      font-size: 10px;
+    }
+
+    .edge-label {
+      display: none;
+    }
+  }
+</style>

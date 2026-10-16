@@ -1,0 +1,286 @@
+# Find-or-create a customer site repo. Runs only in the template repo (is_template), so the
+# copy that every customer repo inherits never runs.
+#
+# Triggered by the "Ensure Site" agent (always answers 204, so the platform never sees a 404):
+#   POST /repos/{owner}/site-template/dispatches
+#   { "event_type": "ensure-site",
+#     "client_payload": { "request_id": "<unique id>", "repo": "site-acme", "brand_name": "Acme",
+#                         "access_code": "<the site's access code>" } }
+#
+# Repo exists → the access code must match its .site-builder/access.json; then makes sure it's a
+#   site with a draft branch.
+# Optional brief (flat fields summary, offerings, tone, goal, pages, details, or a "brief" object)
+#   → Claude writes the whole site into the new repo's draft.
+# Repo missing → creates it from this template (private; public if the site-template variable
+#   SITE_REPOS_PUBLIC is "true", for testing only), stores the access code as a salted
+#   hash on main plus the sign-in key (.site-builder/keys/<code>/key), lets its Actions commit,
+#   sets up GitHub Pages hosting, and creates the draft branch (which starts the first preview).
+# The run is named "ensure-site <request_id>"; Build Watcher on this repo waits for it.
+#
+# One-time setup: Settings → Secrets and variables → Actions → New repository secret
+#   SITE_BUILDER_TOKEN = a token with Administration + Contents read/write on the owner's repos.
+name: Ensure site
+run-name: ensure-site ${{ github.event.client_payload.request_id || github.run_id }}
+
+on:
+  repository_dispatch:
+    types: [ensure-site]
+
+permissions:
+  contents: read
+
+jobs:
+  ensure:
+    if: github.event.repository.is_template
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.SITE_BUILDER_TOKEN }}
+      OWNER: ${{ github.repository_owner }}
+      TEMPLATE: ${{ github.event.repository.name }}
+      REPO: ${{ github.event.client_payload.repo }}
+      DESCRIPTION: ${{ github.event.client_payload.brand_name }}
+      # Repository variable in site-template (Settings > Secrets and variables > Actions > Variables).
+      # "true" creates NEW site repos as public, for testing on a GitHub plan that doesn't allow
+      # Pages on private repos. Public repos expose the access code and the brief to everyone.
+      REPOS_PUBLIC: ${{ vars.SITE_REPOS_PUBLIC }}
+      ACCESS_CODE: ${{ github.event.client_payload.access_code }}
+      REQUEST_ID: ${{ github.event.client_payload.request_id || github.run_id }}
+      # Optional answers for Claude to write the site from (see scripts/generate/brief.mjs). Either
+      # flat fields (what the Create Website form sends: GitHub allows 10 properties per request) or
+      # one "brief" object.
+      BRIEF_OBJECT: ${{ toJSON(github.event.client_payload.brief) }}
+      BRIEF_SUMMARY: ${{ github.event.client_payload.summary }}
+      BRIEF_OFFERINGS: ${{ github.event.client_payload.offerings }}
+      BRIEF_TONE: ${{ github.event.client_payload.tone }}
+      BRIEF_GOAL: ${{ github.event.client_payload.goal }}
+      BRIEF_PAGES: ${{ github.event.client_payload.pages }}
+      BRIEF_DETAILS: ${{ github.event.client_payload.details }}
+    steps:
+      - name: Mask the access code
+        run: '[ -n "$ACCESS_CODE" ] && echo "::add-mask::$ACCESS_CODE" || true'
+
+      # For scripts/access-code.mjs.
+      - uses: actions/checkout@v7
+
+      - name: Check inputs
+        run: |
+          [ -n "$GH_TOKEN" ] || { echo "::error::Secret SITE_BUILDER_TOKEN is not set in $OWNER/$TEMPLATE."; exit 1; }
+          [[ "$REPO" =~ ^[a-z0-9][a-z0-9-]{0,98}$ ]] || {
+            echo "::error::Site name '$REPO' must be lowercase letters, digits and dashes (e.g. site-acme-robotics)."; exit 1; }
+          [ "$REPO" != "$TEMPLATE" ] || { echo "::error::Use a name other than the template's."; exit 1; }
+          problem=$(node -e "import('./scripts/access-code.mjs').then(m => process.stdout.write(m.checkCodeRules(process.env.ACCESS_CODE) ?? ''))")
+          [ -z "$problem" ] || { echo "::error::$problem"; exit 1; }
+
+      - name: Use the repo, or create it
+        id: repo
+        run: |
+          if gh api "repos/$OWNER/$REPO" --silent 2>/dev/null; then
+            gh api "repos/$OWNER/$REPO/contents/site.json" --silent 2>/dev/null || {
+              echo "::error::$OWNER/$REPO exists but isn't a site (no site.json). Pick another name."; exit 1; }
+            record=$(gh api "repos/$OWNER/$REPO/contents/.site-builder/access.json?ref=main" \
+              -H "Accept: application/vnd.github.raw+json" 2>/dev/null) || {
+              echo "::error::This site has no access code yet. Ask the site owner to set one."; exit 1; }
+            printf '%s' "$record" | node scripts/access-code.mjs verify -
+            echo "created=false" >> "$GITHUB_OUTPUT"
+            echo "Using existing repo $OWNER/$REPO (access code accepted)." >> "$GITHUB_STEP_SUMMARY"
+          else
+            private=true
+            [ "${REPOS_PUBLIC,,}" = "true" ] && private=false
+            gh api -X POST "repos/$OWNER/$TEMPLATE/generate" \
+              -f owner="$OWNER" -f name="$REPO" -f description="${DESCRIPTION:-$REPO} website" \
+              -F private=$private -F include_all_branches=false --silent
+            echo "created=true" >> "$GITHUB_OUTPUT"
+            echo "Created $OWNER/$REPO from $TEMPLATE ($([ "$private" = true ] && echo private || echo PUBLIC))." >> "$GITHUB_STEP_SUMMARY"
+            if [ "$private" = false ]; then
+              echo "::warning::$REPO was created PUBLIC (SITE_REPOS_PUBLIC is true): anyone can read its files, including the access code. Use this for testing only."
+            fi
+          fi
+
+      - name: Wait until the repo is ready
+        id: main
+        run: |
+          for i in $(seq 1 40); do
+            sha=$(gh api "repos/$OWNER/$REPO/git/ref/heads/main" --jq .object.sha 2>/dev/null) && [ -n "$sha" ] && {
+              echo "sha=$sha" >> "$GITHUB_OUTPUT"; exit 0; }
+            sleep 3
+          done
+          echo "::error::$OWNER/$REPO wasn't ready after 2 minutes."; exit 1
+
+      - name: Store the access code (new sites)
+        id: access
+        if: steps.repo.outputs.created == 'true'
+        run: |
+          content=$(node scripts/access-code.mjs hash | base64 -w0)
+          sha=$(gh api -X PUT "repos/$OWNER/$REPO/contents/.site-builder/access.json" \
+            -f message="Set access code" -f content="$content" -f branch=main --jq .commit.sha)
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      # Sign-in key: the platform signs users in by fetching this exact path (200 = right code).
+      # Added to new sites, and to existing sites that predate it (their code was checked above).
+      - name: Store the sign-in key
+        id: key
+        run: |
+          path=$(node scripts/access-code.mjs keypath)
+          if gh api "repos/$OWNER/$REPO/contents/$path?ref=main" --silent 2>/dev/null; then
+            echo "Sign-in key already present." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          content=$(node -e "import('./scripts/access-code.mjs').then(m => process.stdout.write(Buffer.from(m.KEY_FILE_CONTENT).toString('base64')))")
+          sha=$(gh api -X PUT "repos/$OWNER/$REPO/contents/$path" \
+            -f message="Add sign-in key" -f content="$content" -f branch=main --jq .commit.sha)
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          if [ "${{ steps.repo.outputs.created }}" != "true" ] && gh api "repos/$OWNER/$REPO/git/ref/heads/draft" --silent 2>/dev/null; then
+            gh api -X PUT "repos/$OWNER/$REPO/contents/$path" \
+              -f message="Add sign-in key" -f content="$content" -f branch=draft --silent
+          fi
+
+      # New repos don't inherit the template's Actions permissions; the settings Action needs write.
+      - name: Let the site's Actions save changes
+        if: steps.repo.outputs.created == 'true'
+        run: |
+          gh api -X PUT "repos/$OWNER/$REPO/actions/permissions/workflow" \
+            -f default_workflow_permissions=write -F can_approve_pull_request_reviews=false --silent
+
+      # Hosting: each site is published with GitHub Pages from its gh-pages branch (live at the
+      # root, the draft preview in preview/). The branch and Pages are set up BEFORE the draft
+      # branch is created, because creating draft starts the first preview deploy.
+      # Needs the token's "Pages: Read and write" permission, and a GitHub plan that allows
+      # Pages for private repos. If either is missing the site is still created; this step warns.
+      - name: Set up hosting (GitHub Pages)
+        id: hosting
+        run: |
+          if ! gh api "repos/$OWNER/$REPO/git/ref/heads/gh-pages" --silent 2>/dev/null; then
+            page='<!doctype html><meta charset="utf-8"><title>Coming soon</title><p style="font-family:system-ui;max-width:30rem;margin:4rem auto">This website has not been published yet.</p>'
+            tree=$(jq -n --arg page "$page" '{tree:[{path:".nojekyll",mode:"100644",type:"blob",content:"Not a Jekyll site.\n"},{path:"index.html",mode:"100644",type:"blob",content:$page}]}' \
+              | gh api -X POST "repos/$OWNER/$REPO/git/trees" --input - --jq .sha)
+            commit=$(jq -n --arg tree "$tree" '{message:"Start the Pages branch",tree:$tree,parents:[]}' \
+              | gh api -X POST "repos/$OWNER/$REPO/git/commits" --input - --jq .sha)
+            gh api -X POST "repos/$OWNER/$REPO/git/refs" -f ref=refs/heads/gh-pages -f sha="$commit" --silent
+          fi
+          if pages=$(gh api "repos/$OWNER/$REPO/pages" 2>/dev/null); then
+            # Pages is on; make sure it publishes the gh-pages branch (a common slip is the
+            # draft or main branch, which serves the source files instead of the website).
+            source=$(printf '%s' "$pages" | jq -r '"\(.source.branch // "")|\(.source.path // "")"')
+            if [ "$source" = "gh-pages|/" ]; then
+              echo "GitHub Pages is on and publishes gh-pages." >> "$GITHUB_STEP_SUMMARY"
+            elif out=$(jq -n '{source:{branch:"gh-pages",path:"/"}}' | gh api -X PUT "repos/$OWNER/$REPO/pages" --input - 2>&1); then
+              echo "GitHub Pages was publishing '$source'; pointed it at gh-pages." >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "::warning::GitHub Pages publishes '$source' instead of gh-pages and could not be corrected. GitHub said: $out"
+              echo "Hosting NOT corrected: $out" >> "$GITHUB_STEP_SUMMARY"
+              echo "failed=true" >> "$GITHUB_OUTPUT"
+            fi
+          elif out=$(jq -n '{source:{branch:"gh-pages",path:"/"}}' | gh api -X POST "repos/$OWNER/$REPO/pages" --input - 2>&1); then
+            echo "Turned GitHub Pages on." >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$(gh api "repos/$OWNER/$REPO" --jq .private 2>/dev/null)" = "true" ] && echo "$out" | grep -qiE "plan|upgrade|not support"; then
+            # Expected on a GitHub plan without Pages for private repos: the site is fine and
+            # simply has no preview until the repo is made public (or hosting moves elsewhere).
+            echo "::notice::$REPO is private and this GitHub plan does not allow Pages for private repos, so there is no preview yet. Make the repo public, then run Ensure site again with the same site name and access code to switch the preview on."
+            echo "Hosting waiting: the repo is private and the plan has no Pages for private repos. After making it public, run Ensure site again (same site name and access code). GitHub said: $out" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::GitHub Pages could not be turned on, so there will be no preview yet. Check the token has Pages: Read and write, and that your GitHub plan allows Pages for private repos (for testing you can set the site-template variable SITE_REPOS_PUBLIC to true so new sites are public). GitHub said: $out"
+            echo "Hosting NOT set up: $out" >> "$GITHUB_STEP_SUMMARY"
+            echo "failed=true" >> "$GITHUB_OUTPUT"
+          fi
+          echo "Preview: https://${OWNER,,}.github.io/$REPO/preview/" >> "$GITHUB_STEP_SUMMARY"
+          echo "Live:    https://${OWNER,,}.github.io/$REPO/" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Make sure the draft branch exists
+        env:
+          FROM_SHA: ${{ steps.key.outputs.sha || steps.access.outputs.sha || steps.main.outputs.sha }}
+        run: |
+          if gh api "repos/$OWNER/$REPO/git/ref/heads/draft" --silent 2>/dev/null; then
+            echo "Draft branch already exists." >> "$GITHUB_STEP_SUMMARY"
+          else
+            gh api -X POST "repos/$OWNER/$REPO/git/refs" -f ref=refs/heads/draft -f sha="$FROM_SHA" --silent
+            echo "Created the draft branch." >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "Site ready: https://github.com/$OWNER/$REPO" >> "$GITHUB_STEP_SUMMARY"
+
+      # Optional "brief": for a NEW site, Claude writes the whole website (pages, sections, simple
+      # pictures) from the customer's answers and saves it on the draft branch. The result is fully
+      # checked before it is saved; if anything fails the site keeps the starter content and this
+      # run fails at the end, so nobody thinks it worked. Existing sites are never overwritten.
+      # Puts the answers together into one brief (BRIEF_JSON) for the steps below.
+      - name: Collect the brief
+        id: brief
+        if: steps.repo.outputs.created == 'true'
+        run: |
+          if [ -n "$BRIEF_SUMMARY" ]; then
+            brief=$(jq -nc --arg business "$DESCRIPTION" --arg summary "$BRIEF_SUMMARY" --arg offerings "$BRIEF_OFFERINGS" \
+              --arg tone "$BRIEF_TONE" --arg goal "$BRIEF_GOAL" --arg pages "$BRIEF_PAGES" --arg notes "$BRIEF_DETAILS" \
+              '{business:$business, summary:$summary, offerings:$offerings, tone:$tone, goal:$goal, pages:$pages, notes:$notes}')
+          elif [ -n "$BRIEF_OBJECT" ] && [ "$BRIEF_OBJECT" != "null" ]; then
+            brief="$BRIEF_OBJECT"
+          else
+            echo "No brief sent; the site keeps its starter content." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          {
+            echo "BRIEF_JSON<<BRIEF_EOF"
+            echo "$brief"
+            echo "BRIEF_EOF"
+          } >> "$GITHUB_ENV"
+          echo "present=true" >> "$GITHUB_OUTPUT"
+
+      - name: Check the daily generation limit
+        id: cap
+        if: steps.brief.outputs.present == 'true'
+        env:
+          GENERATION_DAILY_CAP: ${{ vars.GENERATION_DAILY_CAP || '50' }}
+        run: |
+          since=$(date -u +%Y-%m-%d)
+          runs=$(gh api "repos/$OWNER/$TEMPLATE/actions/workflows/ensure-site.yml/runs?created=%3E%3D$since&per_page=1" --jq .total_count)
+          if [ "$runs" -gt "$GENERATION_DAILY_CAP" ]; then
+            echo "::error::Today's limit of $GENERATION_DAILY_CAP generated sites is used up ($runs runs). The site was created with starter content; try again tomorrow or ask the owner to raise the repository variable GENERATION_DAILY_CAP."
+            echo "failed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "allowed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: pnpm/action-setup@v6
+        if: steps.cap.outputs.allowed == 'true'
+
+      - uses: actions/setup-node@v7
+        if: steps.cap.outputs.allowed == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+        if: steps.cap.outputs.allowed == 'true'
+
+      - name: Write the website with Claude
+        id: generate
+        if: steps.cap.outputs.allowed == 'true'
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set +e
+          mkdir -p "$RUNNER_TEMP/gen"
+          git clone -q --depth 1 --branch draft "https://x-access-token:${GH_TOKEN}@github.com/$OWNER/$REPO.git" "$RUNNER_TEMP/gen/repo" || {
+            echo "::error::Could not open the new site's draft branch."; echo "failed=true" >> "$GITHUB_OUTPUT"; exit 0; }
+          if ! pnpm generate --out "$RUNNER_TEMP/gen/repo"; then
+            echo "failed=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          cd "$RUNNER_TEMP/gen/repo"
+          git config user.name "site-builder[bot]"
+          git config user.email "site-builder@users.noreply.github.com"
+          git add site.json assets
+          git commit -q -m "Write the website from the brief ($REQUEST_ID)" && git push -q origin HEAD:draft \
+            && echo "Wrote the website from the brief to the draft branch (preview updates in about 2 minutes)." >> "$GITHUB_STEP_SUMMARY" \
+            || { echo "::error::Could not save the generated website."; echo "failed=true" >> "$GITHUB_OUTPUT"; }
+
+      # The site itself is ready, but without Pages there is no preview. Fail the run last so the
+      # problem is impossible to miss (the platform only sees "accepted").
+      - name: Report a hosting problem
+        if: steps.hosting.outputs.failed == 'true'
+        run: |
+          echo "::error::The site was created, but GitHub Pages could not be turned on, so it has no preview or live address yet. See the 'Set up hosting' step for GitHub's reason. Usual causes: the token lacks Pages: Read and write, or the GitHub plan does not allow Pages for private repos. Fix that and run Ensure site again with the same site name and access code."
+          exit 1
+
+      - name: Report a generation problem
+        if: steps.cap.outputs.failed == 'true' || steps.generate.outputs.failed == 'true'
+        run: |
+          echo "::error::The site was created with starter content because the website could not be written from the brief. See the 'Write the website with Claude' step (or the daily limit step) for the reason, then edit the site in the Studio or run Ensure site again with a new site name."
+          exit 1

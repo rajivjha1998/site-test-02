@@ -1,0 +1,77 @@
+---
+import type { ScreenOf } from '../../schemas/screen';
+
+type Props = ScreenOf<'catalog'>;
+const { items } = Astro.props;
+---
+
+<ul class="catalog">
+  {items.map((item) => (
+    <li class:list={{ active: item.active }}>
+      <span class="mark" aria-hidden="true" />
+      <span class="name">{item.name}</span>
+      <span class="meta">{item.meta}</span>
+      {item.status && <span class="status">{item.status}</span>}
+    </li>
+  ))}
+</ul>
+
+<style>
+  .catalog {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: var(--space-2);
+    margin: 0;
+    padding: var(--space-4);
+    list-style: none;
+  }
+
+  li {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 2px var(--space-2);
+    align-items: center;
+    padding: 10px 12px;
+    border: 1px solid var(--hair);
+    border-radius: 10px;
+    background: var(--surface);
+  }
+
+  .mark {
+    grid-row: span 2;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: var(--subtle);
+  }
+
+  .active {
+    border-color: var(--accent-text);
+  }
+
+  .active .mark {
+    background: var(--accent);
+  }
+
+  .name {
+    font-size: 12.5px;
+    color: var(--ink);
+  }
+
+  .meta {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  .status {
+    grid-column: 1 / -1;
+    justify-self: start;
+    margin-top: 6px;
+    padding: 2px 8px;
+    border-radius: var(--r-pill);
+    background: var(--accent-bg);
+    color: var(--accent-text);
+    font-size: 10.5px;
+  }
+</style>

@@ -1,0 +1,69 @@
+---
+import type { Band } from '../schemas/common';
+
+interface Props {
+  /** id of the element that labels this section (usually the heading). */
+  labelledBy: string;
+  band?: Band;
+  /** In-page anchor id. */
+  anchor?: string;
+  /** Narrow container for text-only sections. */
+  width?: 'wide' | 'narrow';
+  class?: string;
+}
+
+const { labelledBy, band = 'base', anchor, width = 'wide', class: className } = Astro.props;
+---
+
+<section
+  id={anchor}
+  class:list={['shell', `band-${band}`, className]}
+  aria-labelledby={labelledBy}
+  data-theme={band === 'dark' ? 'dark' : undefined}
+>
+  <div class:list={['container', width]}>
+    <slot />
+  </div>
+</section>
+
+<style>
+  /* The section wrapper owns all vertical spacing, so neighbours never fight over margins. */
+  /* Bands are translucent tints so the ambient page glow carries through the whole page. */
+  .shell {
+    padding-block: var(--section-pad);
+    color: var(--text);
+  }
+
+  .band-surface {
+    background: var(--band-tint);
+    border-block: 1px solid var(--hair-soft);
+  }
+
+  .band-panel {
+    background: color-mix(in srgb, var(--panel) 55%, transparent);
+  }
+
+  .band-accent {
+    background: color-mix(in srgb, var(--accent-bg) 60%, transparent);
+  }
+
+  .band-dark {
+    background: var(--bg);
+  }
+
+  .container {
+    width: 100%;
+    max-width: var(--container);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  .narrow {
+    max-width: calc(820px + 2 * var(--gutter));
+  }
+
+  /* Anchored sections clear the sticky nav. */
+  .shell[id] {
+    scroll-margin-top: 72px;
+  }
+</style>

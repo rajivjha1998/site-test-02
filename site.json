@@ -1,0 +1,125 @@
+{
+  "$schema": "./site.schema.json",
+  "schemaVersion": 1,
+  "brand": {
+    "name": "Your Company",
+    "tagline": "A short line about what you do and who it is for.",
+    "description": "Your Company helps customers do one important thing better. Replace this with a one-sentence summary.",
+    "url": "https://example.com"
+  },
+  "theme": {
+    "primary": "#2563eb",
+    "secondary": "#4f46e5",
+    "tertiary": "#38bdf8"
+  },
+  "navigation": {
+    "items": [
+      { "label": "Features", "href": "/#features" },
+      { "label": "How it works", "href": "/#how-it-works" },
+      { "label": "FAQ", "href": "/#faq" }
+    ],
+    "actions": [{ "label": "Get started", "href": "/#get-started", "variant": "primary" }],
+    "labels": {
+      "menu": "Menu",
+      "close": "Close",
+      "home": "Home",
+      "primaryNav": "Primary"
+    }
+  },
+  "footer": {
+    "columns": [
+      {
+        "heading": "Explore",
+        "links": [
+          { "label": "Features", "href": "/#features" },
+          { "label": "How it works", "href": "/#how-it-works" },
+          { "label": "FAQ", "href": "/#faq" }
+        ]
+      }
+    ],
+    "labels": { "footerNav": "Footer" }
+  },
+  "pages": {
+    "/": {
+      "seo": {
+        "description": "Your Company helps customers do one important thing better. Replace this with a one-sentence summary."
+      },
+      "breadcrumb": "Home",
+      "sections": [
+        {
+          "type": "hero",
+          "layout": "centered",
+          "title": "Your headline goes here.",
+          "titleAccent": "Make it count.",
+          "lede": "One clear sentence on what you offer and why it matters to your customers.",
+          "ctas": [
+            { "label": "Get started", "href": "/#get-started", "variant": "primary" },
+            { "label": "Learn more", "href": "/#features", "variant": "secondary" }
+          ]
+        },
+        {
+          "type": "featureGrid",
+          "anchor": "features",
+          "band": "surface",
+          "title": "Everything you need.",
+          "titleAccent": "Nothing you don't.",
+          "variant": "cards",
+          "columns": 3,
+          "items": [
+            {
+              "icon": "zap",
+              "title": "Fast to start",
+              "body": "Describe your first benefit in one short sentence."
+            },
+            {
+              "icon": "shield",
+              "title": "Safe by default",
+              "body": "Describe your second benefit in one short sentence."
+            },
+            {
+              "icon": "users",
+              "title": "Built for teams",
+              "body": "Describe your third benefit in one short sentence."
+            }
+          ]
+        },
+        {
+          "type": "steps",
+          "anchor": "how-it-works",
+          "title": "How it works.",
+          "steps": [
+            { "title": "Sign up", "body": "Create your account in a minute." },
+            { "title": "Set up", "body": "Tell us what you need." },
+            { "title": "Go", "body": "Start seeing results." }
+          ]
+        },
+        {
+          "type": "faq",
+          "anchor": "faq",
+          "band": "surface",
+          "title": "Questions, answered.",
+          "items": [
+            {
+              "q": "What does Your Company do?",
+              "a": "Answer the question your customers ask most, in two or three plain sentences."
+            },
+            {
+              "q": "How much does it cost?",
+              "a": "Explain pricing simply, or say how customers can get a quote."
+            }
+          ]
+        },
+        {
+          "type": "ctaPanel",
+          "anchor": "get-started",
+          "title": "Ready to start?",
+          "lede": "Tell visitors what happens when they click the button.",
+          "ctas": [
+            { "label": "Contact us", "href": "mailto:hello@example.com", "variant": "primary" }
+          ]
+        }
+      ]
+    }
+  },
+  "forms": {}
+}

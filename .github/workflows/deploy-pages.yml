@@ -1,0 +1,120 @@
+# Builds the site and publishes it with GitHub Pages (from the gh-pages branch):
+#   push or dispatch on `draft` → the preview   https://<owner>.github.io/<repo>/preview/
+#   push or dispatch on `main`  → the live site https://<owner>.github.io/<repo>/
+# Started by the update-settings workflow after it saves or publishes (a push made with the
+# built-in token does not start workflows, so it asks for this one explicitly) and by any
+# normal push to either branch.
+#
+# Optional repository variables (Settings → Secrets and variables → Actions → Variables):
+#   SITE_URL, SITE_BASE            the live address once a custom domain is set up
+#   PUBLIC_SITE_INDEXABLE=true     let search engines in (off until launch; previews are never indexed)
+#   PUBLIC_FORMS_ORIGIN, PUBLIC_TURNSTILE_SITE_KEY
+name: Deploy site
+run-name: deploy ${{ github.ref_name }}
+
+on:
+  push:
+    branches: [draft, main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  # Only to check that GitHub Pages is turned on (see the last step).
+  pages: read
+
+# A newer deploy of the same branch replaces an older one still running. Draft and main can
+# run side by side: the publish script merges their results safely.
+concurrency:
+  group: deploy-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    # The template itself is never published.
+    if: ${{ !github.event.repository.is_template && (github.ref_name == 'draft' || github.ref_name == 'main') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+
+      # A broken site.json must never reach a published site.
+      - name: Validate site.json
+        run: pnpm validate
+
+      - name: Work out the address
+        env:
+          OWNER: ${{ github.repository_owner }}
+          REPO: ${{ github.event.repository.name }}
+          SITE_URL_VAR: ${{ vars.SITE_URL }}
+          SITE_BASE_VAR: ${{ vars.SITE_BASE }}
+          INDEXABLE_VAR: ${{ vars.PUBLIC_SITE_INDEXABLE }}
+        run: |
+          live_url="${SITE_URL_VAR:-https://${OWNER,,}.github.io}"
+          live_base="${SITE_BASE_VAR:-/$REPO/}"
+          live_base="/${live_base#/}"; live_base="${live_base%/}/"
+          if [ "$GITHUB_REF_NAME" = "main" ]; then
+            mode=live; base="$live_base"; indexable="${INDEXABLE_VAR:-false}"
+          else
+            mode=preview; base="${live_base}preview/"; indexable=false
+          fi
+          {
+            echo "MODE=$mode"
+            echo "SITE_URL=$live_url"
+            echo "SITE_BASE=$base"
+            echo "PUBLIC_SITE_INDEXABLE=$indexable"
+            echo "SITE_COMMIT=$GITHUB_SHA"
+            echo "SITE_BRANCH=$GITHUB_REF_NAME"
+            # The request that produced this version, from its commit message: "... (REQUEST-123)".
+            echo "SITE_REQUEST_ID=$(git log -1 --format=%s | sed -nE 's/.*\(([A-Za-z0-9._-]{3,64})\)$/\1/p')"
+          } >> "$GITHUB_ENV"
+          echo "Address: $live_url$base" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build
+        env:
+          PUBLIC_FORMS_ORIGIN: ${{ vars.PUBLIC_FORMS_ORIGIN }}
+          PUBLIC_TURNSTILE_SITE_KEY: ${{ vars.PUBLIC_TURNSTILE_SITE_KEY }}
+        run: pnpm build
+
+      # The classic Pages mistake: a link that ignores the sub-folder the site is served from.
+      - name: Check links stay inside the site's address
+        run: node scripts/check-base-links.mjs apps/website/dist "$SITE_BASE"
+
+      - name: Publish to the gh-pages branch
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DIST: apps/website/dist
+          COMMIT_MESSAGE: Publish ${{ github.ref_name }} ${{ github.sha }}
+        run: scripts/deploy-pages.sh
+
+      # Publishing only updates the gh-pages branch. If GitHub Pages itself is off, the address
+      # answers 404 even though everything above succeeded, so this run says so.
+      - name: Check GitHub Pages is on
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IS_PRIVATE: ${{ github.event.repository.private }}
+        run: |
+          if out=$(gh api "repos/$GITHUB_REPOSITORY/pages" 2>&1); then
+            echo "GitHub Pages is on." >> "$GITHUB_STEP_SUMMARY"
+          elif echo "$out" | grep -qiE "not found|404"; then
+            msg="GitHub Pages is not turned on for this repo, so the address shows 404 although the site was built and published to gh-pages. Turn it on: Settings > Pages > Deploy from a branch > gh-pages, / (root), or re-run Ensure site. If Settings > Pages asks you to upgrade, your GitHub plan does not allow Pages for private repos."
+            if [ "$IS_PRIVATE" = "true" ]; then
+              # Expected while the repo is private on a plan without Pages: the site is built and
+              # published to gh-pages, and will show as soon as Pages is turned on.
+              echo "::warning::$msg"
+              echo "**$msg**" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "::error::$msg"
+              echo "**$msg**" >> "$GITHUB_STEP_SUMMARY"
+              exit 1
+            fi
+          else
+            echo "::warning::Could not check whether GitHub Pages is on: $out"
+          fi

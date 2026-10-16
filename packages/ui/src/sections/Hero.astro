@@ -1,0 +1,228 @@
+---
+import type { SectionOf } from '../schemas/sections';
+import Picture from '../primitives/Picture.astro';
+import type { WithResolvedImage } from '../lib/image';
+import Ctas from '../primitives/Ctas.astro';
+import EmailCapture from '../forms/EmailCapture.astro';
+import type { FormDefinition } from '../schemas/form';
+
+type Props = Omit<WithResolvedImage<SectionOf<'hero'>>, 'type'> & {
+  uid: string;
+  /** The form behind `capture`, resolved by SectionRenderer. */
+  captureForm?: FormDefinition;
+  formsOrigin?: string;
+};
+
+const {
+  uid,
+  layout,
+  context,
+  title,
+  titleAccent,
+  lede,
+  ctas,
+  note,
+  capture,
+  captureForm,
+  formsOrigin,
+  image,
+  band = 'base',
+} = Astro.props;
+const id = `${uid}-title`;
+---
+
+<section class:list={['hero', layout, `band-${band}`]} aria-labelledby={id}>
+  <div class="container">
+    <div class="copy">
+      {context && <p class="context">{context}</p>}
+      <h1 id={id}>
+        {title}
+        {titleAccent && <span class="accent">{` ${titleAccent}`}</span>}
+      </h1>
+      <p class="lede">{lede}</p>
+      {capture && captureForm && (
+        <EmailCapture
+          uid={uid}
+          form={captureForm}
+          continueTo={capture.continueTo}
+          label={capture.label}
+          placeholder={capture.placeholder}
+          note={capture.note}
+          formsOrigin={formsOrigin}
+          align={layout === 'centered' ? 'center' : 'start'}
+        />
+      )}
+      <Ctas ctas={ctas} align={layout === 'centered' ? 'center' : 'start'} />
+      {note && <p class="note">{note}</p>}
+    </div>
+    {image && (
+      <div class="media">
+        <Picture image={image} priority ratio="16 / 10" radius="none" />
+      </div>
+    )}
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding-block: clamp(56px, 8vw, 104px) clamp(56px, 7vw, 88px);
+  }
+
+  /* Soft glows behind the hero — the page's one decorative moment (claude-design.md §5). */
+  .hero::before,
+  .hero::after {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    border-radius: 50%;
+    filter: blur(24px);
+    pointer-events: none;
+  }
+
+  .hero::before {
+    top: -18%;
+    right: -12%;
+    width: min(860px, 95vw);
+    aspect-ratio: 1;
+    background:
+      radial-gradient(closest-side at 45% 45%, var(--glow-1), transparent 70%),
+      radial-gradient(closest-side at 70% 65%, var(--glow-3), transparent 75%);
+  }
+
+  /* Sized to fade out before the hero's bottom edge, so no hard line shows at the next band. */
+  .hero::after {
+    top: 8%;
+    left: -14%;
+    width: min(520px, 70vw);
+    aspect-ratio: 1;
+    background: radial-gradient(closest-side, var(--glow-2), transparent 70%);
+  }
+
+  .band-accent {
+    background: color-mix(in srgb, var(--accent-bg) 60%, transparent);
+  }
+
+  .band-surface {
+    background: var(--band-tint);
+  }
+
+  .container {
+    display: grid;
+    gap: var(--space-7);
+    max-width: var(--container);
+    margin-inline: auto;
+    padding-inline: var(--gutter);
+  }
+
+  .split .container {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+    align-items: center;
+  }
+
+  .centered .copy {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .media {
+    overflow: hidden;
+    border-radius: var(--r-panel);
+    box-shadow: var(--sh-win);
+  }
+
+  .centered .media {
+    width: 100%;
+    max-width: 960px;
+    margin-inline: auto;
+  }
+
+  .copy {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-5);
+  }
+
+  .context {
+    font-family: var(--font-mono);
+    font-size: var(--fs-label);
+    color: var(--muted);
+  }
+
+  h1 {
+    max-width: 16ch;
+    font-size: var(--fs-h1);
+    font-weight: 400;
+    line-height: var(--lh-tight);
+  }
+
+  .centered h1 {
+    max-width: 20ch;
+  }
+
+  .accent {
+    color: var(--accent);
+  }
+
+  @supports (background-clip: text) {
+    .accent {
+      background: linear-gradient(100deg, var(--accent) 10%, var(--accent-2) 90%);
+      background-clip: text;
+      color: transparent;
+    }
+  }
+
+  .lede {
+    max-width: 46ch;
+    font-size: var(--fs-lede);
+    line-height: 1.55;
+    color: var(--text);
+  }
+
+  .note {
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  /* Entrance: copy rises in with a short stagger, then the window — once, on load. */
+  @media (prefers-reduced-motion: no-preference) {
+    .copy > :global(*),
+    .media {
+      animation: rise 0.7s var(--ease-out) both;
+    }
+
+    .copy > :global(:nth-child(2)) {
+      animation-delay: 0.08s;
+    }
+
+    .copy > :global(:nth-child(3)) {
+      animation-delay: 0.16s;
+    }
+
+    .media {
+      animation-duration: 0.9s;
+      animation-delay: 0.22s;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+    }
+  }
+
+  @media (max-width: 960px) {
+    .split .container {
+      grid-template-columns: minmax(0, 1fr);
+    }
+  }
+
+  @media (max-width: 760px) {
+    .copy {
+      justify-items: stretch;
+    }
+  }
+</style>

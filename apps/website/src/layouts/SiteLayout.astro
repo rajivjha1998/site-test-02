@@ -1,0 +1,35 @@
+---
+import { PUBLIC_FORMS_ORIGIN, PUBLIC_SITE_INDEXABLE } from 'astro:env/client';
+import BaseLayout from '@blackboxops/ui/layouts/BaseLayout.astro';
+import Nav from '@blackboxops/ui/components/Nav.astro';
+import Footer from '@blackboxops/ui/components/Footer.astro';
+import type { SeoInput } from '@blackboxops/ui/lib/seo.ts';
+import { getChrome, getEntity } from '../lib/site';
+
+interface Props {
+  seo: SeoInput;
+}
+
+const { seo } = Astro.props;
+const [entity, chrome] = await Promise.all([getEntity(), getChrome()]);
+---
+
+<BaseLayout
+  entity={entity}
+  seo={seo}
+  indexable={PUBLIC_SITE_INDEXABLE}
+  themeCss={chrome.themeCss}
+  favicon={chrome.favicon}
+>
+  <Nav
+    slot="header"
+    nav={chrome.navigation}
+    siteName={entity.name}
+    logo={chrome.logo}
+    currentPath={seo.path}
+    forms={chrome.forms}
+    formsOrigin={PUBLIC_FORMS_ORIGIN || undefined}
+  />
+  <slot />
+  <Footer slot="footer" footer={chrome.footer} siteName={entity.name} logo={chrome.logo} />
+</BaseLayout>

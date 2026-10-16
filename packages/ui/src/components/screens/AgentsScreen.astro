@@ -1,0 +1,179 @@
+---
+import type { ScreenOf } from '../../schemas/screen';
+
+type Props = ScreenOf<'agents'>;
+const { trigger, steps, modeLabels, statusLabels } = Astro.props;
+---
+
+<div class="agents">
+  <p class="trigger">{trigger}</p>
+  <ol class="run">
+    {steps.map((step) => (
+      <li data-status={step.status}>
+        <span class="dot" aria-hidden="true" />
+        <div class="body">
+          <p class="agent">{step.agent}</p>
+          <p class="task">{step.task}</p>
+        </div>
+        <span class:list={['mode', step.mode]}>{modeLabels[step.mode]}</span>
+        <span class="status">{statusLabels[step.status]}</span>
+      </li>
+    ))}
+  </ol>
+</div>
+
+<style>
+  .agents {
+    display: grid;
+    gap: var(--space-3);
+    padding: var(--space-4);
+  }
+
+  .trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    justify-self: start;
+    padding: 4px 10px;
+    border-radius: var(--r-pill);
+    background: var(--panel);
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--muted);
+  }
+
+  .run {
+    position: relative;
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  /* The connector line behind the status dots. */
+  .run::before {
+    content: '';
+    position: absolute;
+    top: 18px;
+    bottom: 18px;
+    left: 15px;
+    border-left: 1.5px dashed var(--hair);
+  }
+
+  li {
+    position: relative;
+    display: grid;
+    grid-template-columns: 14px minmax(0, 1fr) auto auto;
+    align-items: center;
+    gap: var(--space-3);
+    padding: 8px 10px;
+    border-radius: 8px;
+  }
+
+  li[data-status='running'] {
+    background: var(--accent-bg);
+  }
+
+  .dot {
+    width: 10px;
+    height: 10px;
+    margin-inline-start: 1px;
+    border: 2px solid var(--hair);
+    border-radius: 50%;
+    background: var(--surface);
+  }
+
+  [data-status='done'] .dot {
+    border-color: var(--ok);
+    background: var(--ok);
+  }
+
+  [data-status='running'] .dot {
+    border-color: var(--accent);
+    background: var(--accent);
+  }
+
+  [data-status='waiting'] .dot {
+    border-color: var(--warn);
+  }
+
+  .agent {
+    overflow: hidden;
+    font-size: 12.5px;
+    color: var(--ink);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .task {
+    overflow: hidden;
+    font-size: 11.5px;
+    color: var(--muted);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mode {
+    padding: 2px 8px;
+    border-radius: var(--r-pill);
+    font-size: 10.5px;
+    border: 1px solid var(--hair);
+    color: var(--text);
+  }
+
+  .mode.agent,
+  .mode.both {
+    border-color: transparent;
+    background: var(--accent-bg);
+    color: var(--accent-text);
+  }
+
+  .status {
+    min-width: 64px;
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--muted);
+    text-align: end;
+  }
+
+  [data-status='done'] .status {
+    color: var(--ok-text);
+  }
+
+  [data-status='running'] .status {
+    color: var(--accent-text);
+  }
+
+  [data-status='waiting'] .status {
+    color: var(--warn-text);
+  }
+
+  /* A gentle pulse on the running step — motion inside a product window only. */
+  @media (prefers-reduced-motion: no-preference) {
+    [data-status='running'] .dot {
+      animation: pulse 1.6s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%,
+      100% {
+        box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent);
+      }
+
+      50% {
+        box-shadow: 0 0 0 6px color-mix(in srgb, var(--accent) 0%, transparent);
+      }
+    }
+  }
+
+  @container (max-width: 520px) {
+    li {
+      grid-template-columns: 14px minmax(0, 1fr) auto;
+    }
+
+    .mode {
+      display: none;
+    }
+  }
+</style>

@@ -1,0 +1,30 @@
+---
+import SectionRenderer from '@blackboxops/ui/sections/SectionRenderer.astro';
+import { sectionSchema } from '@blackboxops/ui/schemas/sections.ts';
+import SiteLayout from '../layouts/SiteLayout.astro';
+import { getPages, renderContext } from '../lib/site';
+
+const path = '/404/';
+const context = await renderContext(path, await getPages());
+// Parsed like any content file, so defaults apply and mistakes fail the build.
+const sections = sectionSchema.array().parse([
+  {
+    type: 'hero',
+    layout: 'centered',
+    title: 'Page not found.',
+    lede: "The page you're looking for has moved or doesn't exist. Try the home page instead.",
+    ctas: [{ label: 'Go to the home page', href: '/', variant: 'primary' }],
+  },
+]);
+---
+
+<SiteLayout
+  seo={{
+    title: 'Page not found',
+    description: 'This page could not be found.',
+    path,
+    noindex: true,
+  }}
+>
+  <SectionRenderer sections={sections} context={context} />
+</SiteLayout>

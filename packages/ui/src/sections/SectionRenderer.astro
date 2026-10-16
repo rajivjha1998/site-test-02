@@ -1,0 +1,163 @@
+---
+import type { Section } from '../schemas/sections';
+import { resolveForm, type RenderContext } from '../lib/resolve';
+import { resolveImage, withImage } from '../lib/image';
+import Hero from './Hero.astro';
+import LogoStrip from './LogoStrip.astro';
+import StatStrip from './StatStrip.astro';
+import FeatureGrid from './FeatureGrid.astro';
+import Split from './Split.astro';
+import Steps from './Steps.astro';
+import ComparisonTable from './ComparisonTable.astro';
+import PricingTable from './PricingTable.astro';
+import Testimonial from './Testimonial.astro';
+import PageCards from './PageCards.astro';
+import Faq from './Faq.astro';
+import CtaPanel from './CtaPanel.astro';
+import FormSection from './FormSection.astro';
+import RichText from './RichText.astro';
+import Gallery from './Gallery.astro';
+import Offers from './Offers.astro';
+import Team from './Team.astro';
+import Contact from './Contact.astro';
+
+interface Props {
+  sections: Section[];
+  context: RenderContext;
+}
+
+const { sections, context } = Astro.props;
+---
+
+{sections.map((section, index) => {
+  // Hidden sections stay in site.json but never render. `uid` keeps its original position so
+  // element ids don't shift when a section is hidden or shown.
+  if (section.hidden) return null;
+  const uid = `s${index}`;
+  switch (section.type) {
+    case 'hero': {
+      const { type: _t, image, ...rest } = section;
+      return (
+        <Hero
+          uid={uid}
+          {...rest}
+          image={image && resolveImage(image, context)}
+          captureForm={rest.capture && resolveForm(rest.capture.form, context)}
+          formsOrigin={context.formsOrigin}
+        />
+      );
+    }
+    case 'logoStrip': {
+      const { type: _t, items, ...rest } = section;
+      return (
+        <LogoStrip uid={uid} {...rest} items={items.map((item) => withImage(item, context))} />
+      );
+    }
+    case 'statStrip': {
+      const { type: _t, ...rest } = section;
+      return <StatStrip uid={uid} {...rest} />;
+    }
+    case 'featureGrid': {
+      const { type: _t, items, ...rest } = section;
+      return (
+        <FeatureGrid uid={uid} {...rest} items={items.map((item) => withImage(item, context))} />
+      );
+    }
+    case 'split': {
+      const { type: _t, image, ...rest } = section;
+      return <Split uid={uid} {...rest} image={image && resolveImage(image, context)} />;
+    }
+    case 'steps': {
+      const { type: _t, ...rest } = section;
+      return <Steps uid={uid} {...rest} />;
+    }
+    case 'comparisonTable': {
+      const { type: _t, ...rest } = section;
+      return <ComparisonTable uid={uid} {...rest} />;
+    }
+    case 'pricingTable': {
+      const { type: _t, ...rest } = section;
+      return <PricingTable uid={uid} {...rest} />;
+    }
+    case 'testimonial': {
+      const { type: _t, avatar, ...rest } = section;
+      return <Testimonial uid={uid} {...rest} avatar={avatar && resolveImage(avatar, context)} />;
+    }
+    case 'pageCards': {
+      const { type: _t, ...rest } = section;
+      return (
+        <PageCards uid={uid} {...rest} cards={context.cards} currentPath={context.currentPath} />
+      );
+    }
+    case 'faq': {
+      const { type: _t, ...rest } = section;
+      return <Faq uid={uid} {...rest} />;
+    }
+    case 'ctaPanel': {
+      const { type: _t, ...rest } = section;
+      return (
+        <CtaPanel
+          uid={uid}
+          {...rest}
+          captureForm={rest.capture && resolveForm(rest.capture.form, context)}
+          formsOrigin={context.formsOrigin}
+        />
+      );
+    }
+    case 'form': {
+      const { type: _t, form, image, ...rest } = section;
+      return (
+        <FormSection
+          uid={uid}
+          {...rest}
+          form={resolveForm(form, context)}
+          image={image && resolveImage(image, context)}
+          turnstileSiteKey={context.turnstileSiteKey}
+          formsOrigin={context.formsOrigin}
+        />
+      );
+    }
+    case 'richText': {
+      const { type: _t, ...rest } = section;
+      return <RichText uid={uid} {...rest} />;
+    }
+    case 'gallery': {
+      const { type: _t, images, ...rest } = section;
+      return (
+        <Gallery
+          uid={uid}
+          {...rest}
+          images={images.map((image) => ({
+            ...resolveImage(image, context),
+            caption: image.caption,
+          }))}
+        />
+      );
+    }
+    case 'offers': {
+      const { type: _t, items, ...rest } = section;
+      return <Offers uid={uid} {...rest} items={items.map((item) => withImage(item, context))} />;
+    }
+    case 'team': {
+      const { type: _t, members, ...rest } = section;
+      return (
+        <Team
+          uid={uid}
+          {...rest}
+          members={members.map(({ photo, ...member }) => ({
+            ...member,
+            ...(photo ? { photo: resolveImage(photo, context) } : {}),
+          }))}
+        />
+      );
+    }
+    case 'contact': {
+      const { type: _t, ...rest } = section;
+      return <Contact uid={uid} {...rest} />;
+    }
+    default: {
+      const unknown: never = section;
+      throw new Error(`No component for section ${JSON.stringify(unknown)}`);
+    }
+  }
+})}

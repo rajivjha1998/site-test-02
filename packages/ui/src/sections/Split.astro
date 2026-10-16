@@ -1,0 +1,95 @@
+---
+import type { SectionOf } from '../schemas/sections';
+import SectionShell from '../primitives/SectionShell.astro';
+import Picture from '../primitives/Picture.astro';
+import type { WithResolvedImage } from '../lib/image';
+import Ctas from '../primitives/Ctas.astro';
+import CheckList from '../primitives/CheckList.astro';
+import IconTile from '../primitives/IconTile.astro';
+
+type Props = Omit<WithResolvedImage<SectionOf<'split'>>, 'type'> & { uid: string };
+const { uid, icon, anchor, title, titleAccent, lede, band, body, bullets, ctas, image, reverse } =
+  Astro.props;
+const id = `${uid}-title`;
+---
+
+<SectionShell labelledBy={id} band={band} anchor={anchor}>
+  <div class:list={['split', { reverse, solo: !image }]}>
+    <div class="copy">
+      {icon && <IconTile name={icon} />}
+      <h2 id={id}>
+        {title}
+        {titleAccent && <span class="accent">{` ${titleAccent}`}</span>}
+      </h2>
+      {lede && <p class="lede">{lede}</p>}
+      {body.map((paragraph) => (
+        <p>{paragraph}</p>
+      ))}
+      <CheckList items={bullets} />
+      <Ctas ctas={ctas} />
+    </div>
+    {image && (
+      <div class="media">
+        <Picture image={image} ratio="4 / 3" radius="none" />
+      </div>
+    )}
+  </div>
+</SectionShell>
+
+<style>
+  .split {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    gap: clamp(var(--space-7), 6vw, 72px);
+    align-items: center;
+  }
+
+  .solo {
+    grid-template-columns: minmax(0, 1fr);
+    max-width: 720px;
+  }
+
+  .media {
+    overflow: hidden;
+    border-radius: var(--r-panel);
+    box-shadow: var(--sh-win);
+  }
+
+  .reverse .media {
+    order: -1;
+  }
+
+  .copy {
+    display: grid;
+    justify-items: start;
+    gap: var(--space-4);
+  }
+
+  h2 {
+    max-width: 18ch;
+    font-size: clamp(30px, 3.6vw, 44px);
+  }
+
+  .accent {
+    color: var(--accent);
+  }
+
+  .lede {
+    font-size: var(--fs-lede);
+    color: var(--text);
+  }
+
+  p {
+    max-width: 52ch;
+  }
+
+  @media (max-width: 960px) {
+    .split {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .reverse .media {
+      order: 0;
+    }
+  }
+</style>

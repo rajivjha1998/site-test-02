@@ -1,0 +1,19 @@
+{
+  "name": "@blackboxops/ui",
+  "version": "0.1.0",
+  "description": "BlackboxOps.IO design system: tokens, layouts, primitives, components and page sections for Astro.",
+  "type": "module",
+  "exports": {
+    "./*": "./src/*"
+  },
+  "files": [
+    "src"
+  ],
+  "peerDependencies": {
+    "astro": "^7.3.6"
+  },
+  "dependencies": {
+    "@lucide/astro": "^1.52.0",
+    "marked": "15.0.12"
+  }
+}

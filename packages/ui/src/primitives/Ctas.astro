@@ -1,0 +1,44 @@
+---
+import type { Cta } from '../schemas/common';
+import Button from './Button.astro';
+
+interface Props {
+  ctas: Cta[];
+  align?: 'start' | 'center';
+}
+
+const { ctas, align = 'start' } = Astro.props;
+---
+
+{ctas.length > 0 && (
+  <div class:list={['ctas', align]}>
+    {ctas.map((cta) => (
+      <Button href={cta.href} variant={cta.variant}>
+        {cta.label}
+      </Button>
+    ))}
+  </div>
+)}
+
+<style>
+  .ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .center {
+    justify-content: center;
+  }
+
+  @media (max-width: 760px) {
+    .ctas {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .ctas :global(.btn:not(.link)) {
+      width: 100%;
+    }
+  }
+</style>
