@@ -1,0 +1,9 @@
+# site-test-02
+
+> A neighbourhood sourdough bakery and cafe in Leeds serving fresh loaves, seasonal pastries, weekend brunch and custom celebration cakes.
+
+## Pages
+
+- [Home](https://rajivjha1998.github.io/site-test-02/): Sourdough loaves, seasonal pastries, weekend brunch and custom celebration cakes from your neighbourhood bakery and cafe on Mill Lane, Leeds.
+- [About](https://rajivjha1998.github.io/site-test-02/about/): Meet the neighbourhood sourdough bakery and cafe on Mill Lane, Leeds, baking for local families and office workers.
+- [Contact](https://rajivjha1998.github.io/site-test-02/contact/): Book a call with our Leeds sourdough bakery and cafe. Email, phone, address and opening hours for 12 Mill Lane, Leeds LS1 4AB.
