@@ -2,120 +2,376 @@
   "$schema": "./site.schema.json",
   "schemaVersion": 1,
   "brand": {
-    "name": "Your Company",
-    "tagline": "A short line about what you do and who it is for.",
-    "description": "Your Company helps customers do one important thing better. Replace this with a one-sentence summary.",
-    "url": "https://example.com"
+    "name": "site-test-02",
+    "tagline": "Neighbourhood sourdough bakery and cafe in Leeds, baking loaves, pastries and celebration cakes.",
+    "description": "A neighbourhood sourdough bakery and cafe in Leeds serving fresh loaves, seasonal pastries, weekend brunch and custom celebration cakes.",
+    "url": "https://example.com",
+    "logo": "assets/logo.svg",
+    "contactEmail": "hello@hearthandcrumb.example",
+    "locale": "en-GB"
   },
   "theme": {
-    "primary": "#2563eb",
-    "secondary": "#4f46e5",
-    "tertiary": "#38bdf8"
+    "primary": "#7A4A2A",
+    "secondary": "#F3E7D3",
+    "tertiary": "#C8893E"
   },
   "navigation": {
     "items": [
-      { "label": "Features", "href": "/#features" },
-      { "label": "How it works", "href": "/#how-it-works" },
-      { "label": "FAQ", "href": "/#faq" }
+      {
+        "label": "Home",
+        "href": "/"
+      },
+      {
+        "label": "About",
+        "href": "/about/"
+      },
+      {
+        "label": "Contact",
+        "href": "/contact/"
+      }
     ],
-    "actions": [{ "label": "Get started", "href": "/#get-started", "variant": "primary" }],
+    "actions": [
+      {
+        "label": "Book a call",
+        "href": "/contact/",
+        "variant": "primary"
+      }
+    ],
     "labels": {
       "menu": "Menu",
       "close": "Close",
       "home": "Home",
-      "primaryNav": "Primary"
+      "primaryNav": "Main navigation"
     }
   },
   "footer": {
     "columns": [
       {
-        "heading": "Explore",
+        "heading": "The bakery",
         "links": [
-          { "label": "Features", "href": "/#features" },
-          { "label": "How it works", "href": "/#how-it-works" },
-          { "label": "FAQ", "href": "/#faq" }
+          {
+            "label": "Home",
+            "href": "/"
+          },
+          {
+            "label": "About us",
+            "href": "/about/"
+          },
+          {
+            "label": "Contact",
+            "href": "/contact/"
+          }
+        ]
+      },
+      {
+        "heading": "Get in touch",
+        "links": [
+          {
+            "label": "hello@hearthandcrumb.example",
+            "href": "mailto:hello@hearthandcrumb.example"
+          },
+          {
+            "label": "+44 113 496 0000",
+            "href": "tel:+441134960000"
+          },
+          {
+            "label": "Opening hours",
+            "href": "/contact/#hours"
+          }
         ]
       }
     ],
-    "labels": { "footerNav": "Footer" }
+    "labels": {
+      "footerNav": "Footer navigation"
+    }
   },
   "pages": {
     "/": {
       "seo": {
-        "description": "Your Company helps customers do one important thing better. Replace this with a one-sentence summary."
+        "description": "Sourdough loaves, seasonal pastries, weekend brunch and custom celebration cakes from your neighbourhood bakery and cafe on Mill Lane, Leeds."
       },
       "breadcrumb": "Home",
       "sections": [
         {
           "type": "hero",
           "layout": "centered",
-          "title": "Your headline goes here.",
-          "titleAccent": "Make it count.",
-          "lede": "One clear sentence on what you offer and why it matters to your customers.",
+          "title": "Sourdough baked fresh in Leeds.",
+          "lede": "Your neighbourhood bakery and cafe for honest bread, seasonal pastries and weekend brunch.",
           "ctas": [
-            { "label": "Get started", "href": "/#get-started", "variant": "primary" },
-            { "label": "Learn more", "href": "/#features", "variant": "secondary" }
-          ]
-        },
-        {
-          "type": "featureGrid",
-          "anchor": "features",
-          "band": "surface",
-          "title": "Everything you need.",
-          "titleAccent": "Nothing you don't.",
-          "variant": "cards",
-          "columns": 3,
-          "items": [
             {
-              "icon": "zap",
-              "title": "Fast to start",
-              "body": "Describe your first benefit in one short sentence."
+              "label": "Book a call",
+              "href": "/contact/",
+              "variant": "primary"
             },
             {
-              "icon": "shield",
-              "title": "Safe by default",
-              "body": "Describe your second benefit in one short sentence."
-            },
-            {
-              "icon": "users",
-              "title": "Built for teams",
-              "body": "Describe your third benefit in one short sentence."
+              "label": "Meet the bakery",
+              "href": "/about/",
+              "variant": "secondary"
             }
           ]
         },
         {
-          "type": "steps",
-          "anchor": "how-it-works",
-          "title": "How it works.",
-          "steps": [
-            { "title": "Sign up", "body": "Create your account in a minute." },
-            { "title": "Set up", "body": "Tell us what you need." },
-            { "title": "Go", "body": "Start seeing results." }
+          "type": "offers",
+          "title": "What we bake for you.",
+          "columns": 2,
+          "items": [
+            {
+              "title": "Sourdough loaves",
+              "body": "Slow-risen bread with a crisp crust and an open crumb, baked for your table and your lunchbox."
+            },
+            {
+              "title": "Seasonal pastries",
+              "body": "Pastries that change with the seasons, perfect with a morning coffee on the way to work."
+            },
+            {
+              "title": "Weekend brunch",
+              "body": "A relaxed Saturday and Sunday brunch for families and friends who want good food without the fuss."
+            },
+            {
+              "title": "Custom celebration cakes",
+              "body": "Cakes made to order for birthdays, office parties and family milestones. Book a call to plan yours."
+            }
           ]
         },
         {
+          "type": "split",
+          "title": "Bread worth slowing down for.",
+          "body": [
+            "Good sourdough takes time, so we give it time. Every loaf is shaped by hand and baked to a deep, golden crust.",
+            "Pop in for a loaf before work, pick up pastries for the office or settle in with the family at the weekend."
+          ],
+          "bullets": [
+            "Freshly baked loaves and pastries",
+            "A friendly cafe on Mill Lane",
+            "Cakes made to your brief"
+          ],
+          "ctas": [
+            {
+              "label": "Our story",
+              "href": "/about/",
+              "variant": "secondary"
+            }
+          ],
+          "image": {
+            "src": "assets/sourdough-loaf.svg",
+            "alt": "Illustration of a scored sourdough loaf on a wooden board beside wheat stalks"
+          },
+          "reverse": false
+        },
+        {
+          "type": "steps",
+          "title": "Ordering a celebration cake.",
+          "steps": [
+            {
+              "title": "Book a call",
+              "body": "Get in touch by phone or email and pick a time to talk through your occasion."
+            },
+            {
+              "title": "Plan the details",
+              "body": "Tell us the size, flavours and style you want for your cake."
+            },
+            {
+              "title": "Collect and celebrate",
+              "body": "Pick up your cake from the bakery on Mill Lane, ready for the big day."
+            }
+          ],
+          "ctas": [
+            {
+              "label": "Book a cake call",
+              "href": "/contact/",
+              "variant": "primary"
+            }
+          ]
+        },
+        {
+          "type": "featureGrid",
+          "title": "Made for your day.",
+          "columns": 3,
+          "variant": "cards",
+          "items": [
+            {
+              "icon": "clock",
+              "title": "Early weekday opening",
+              "body": "Open from 7:30 Tuesday to Friday, so you can grab breakfast before the office."
+            },
+            {
+              "icon": "users",
+              "title": "Family-friendly weekends",
+              "body": "Weekend brunch from 8:00 on Saturday and Sunday, made for unhurried mornings together."
+            },
+            {
+              "icon": "calendar",
+              "title": "Office orders",
+              "body": "Planning a team treat or a leaving cake? Book a call and we will help you sort it."
+            }
+          ],
+          "ctas": []
+        },
+        {
           "type": "faq",
-          "anchor": "faq",
-          "band": "surface",
           "title": "Questions, answered.",
           "items": [
             {
-              "q": "What does Your Company do?",
-              "a": "Answer the question your customers ask most, in two or three plain sentences."
+              "q": "When are you open?",
+              "a": "Tuesday to Friday from 7:30 to 16:00, and Saturday and Sunday from 8:00 to 15:00."
             },
             {
-              "q": "How much does it cost?",
-              "a": "Explain pricing simply, or say how customers can get a quote."
+              "q": "Where can I find you?",
+              "a": "We are at 12 Mill Lane, Leeds LS1 4AB."
+            },
+            {
+              "q": "How do I order a celebration cake?",
+              "a": "Book a call through our contact page, or email or phone us, and we will talk through what you need."
+            },
+            {
+              "q": "Can I order for my office?",
+              "a": "Yes. Get in touch with the details of your order and we will help you plan it."
             }
           ]
         },
         {
           "type": "ctaPanel",
-          "anchor": "get-started",
-          "title": "Ready to start?",
-          "lede": "Tell visitors what happens when they click the button.",
+          "title": "Planning something special?",
+          "lede": "Book a call to talk about celebration cakes, office orders or anything else you need.",
           "ctas": [
-            { "label": "Contact us", "href": "mailto:hello@example.com", "variant": "primary" }
+            {
+              "label": "Book a call",
+              "href": "/contact/",
+              "variant": "primary"
+            },
+            {
+              "label": "Call +44 113 496 0000",
+              "href": "tel:+441134960000",
+              "variant": "secondary"
+            }
+          ]
+        }
+      ]
+    },
+    "/about/": {
+      "seo": {
+        "title": "About us",
+        "description": "Meet the neighbourhood sourdough bakery and cafe on Mill Lane, Leeds, baking for local families and office workers."
+      },
+      "breadcrumb": "About",
+      "sections": [
+        {
+          "type": "hero",
+          "layout": "centered",
+          "title": "A bakery for the neighbourhood.",
+          "lede": "We bake sourdough, pastries and cakes for the people who live and work around Mill Lane.",
+          "ctas": [
+            {
+              "label": "Book a call",
+              "href": "/contact/",
+              "variant": "primary"
+            }
+          ]
+        },
+        {
+          "type": "richText",
+          "title": "Our story",
+          "body": "## Why we bake\n\nWe believe good bread should be part of everyday life, not a special treat. That is why we bake sourdough the patient way and serve it right here in our Leeds neighbourhood.\n\n## Who we bake for\n\nOur doors open early for office workers who want a proper breakfast on the way in, and our weekends are made for families who want to linger over brunch. Whether you come in for a single loaf or a celebration cake, you get the same care.\n\n## What you will find\n\n- Sourdough loaves baked fresh\n- Pastries that follow the seasons\n- A relaxed weekend brunch\n- Celebration cakes made to order"
+        },
+        {
+          "type": "split",
+          "title": "Cakes for the moments that matter.",
+          "body": [
+            "Birthdays, anniversaries, office farewells: a good cake brings people together. We make every celebration cake to order, around your occasion and your taste.",
+            "Book a call and we will plan it with you, step by step."
+          ],
+          "bullets": [],
+          "ctas": [
+            {
+              "label": "Book a cake call",
+              "href": "/contact/",
+              "variant": "primary"
+            }
+          ],
+          "image": {
+            "src": "assets/celebration-cake.svg",
+            "alt": "Illustration of a two-tier celebration cake with a single candle"
+          },
+          "reverse": true
+        },
+        {
+          "type": "pageCards",
+          "title": "Explore",
+          "group": "main",
+          "excludeCurrent": true,
+          "hidden": true,
+          "columns": 3,
+          "linkLabel": "Learn more"
+        },
+        {
+          "type": "ctaPanel",
+          "title": "Come and say hello.",
+          "lede": "Visit us on Mill Lane or book a call to plan an order.",
+          "ctas": [
+            {
+              "label": "Book a call",
+              "href": "/contact/",
+              "variant": "primary"
+            }
+          ]
+        }
+      ]
+    },
+    "/contact/": {
+      "seo": {
+        "title": "Contact",
+        "description": "Book a call with our Leeds sourdough bakery and cafe. Email, phone, address and opening hours for 12 Mill Lane, Leeds LS1 4AB."
+      },
+      "breadcrumb": "Contact",
+      "sections": [
+        {
+          "type": "hero",
+          "layout": "centered",
+          "title": "Book a call with us.",
+          "lede": "Phone or email to plan a celebration cake, an office order or a visit to the cafe.",
+          "ctas": [
+            {
+              "label": "Email us",
+              "href": "mailto:hello@hearthandcrumb.example",
+              "variant": "primary"
+            },
+            {
+              "label": "Call us",
+              "href": "tel:+441134960000",
+              "variant": "secondary"
+            }
+          ]
+        },
+        {
+          "type": "contact",
+          "anchor": "contact",
+          "title": "Get in touch.",
+          "email": "hello@hearthandcrumb.example",
+          "phone": "+44 113 496 0000",
+          "address": "12 Mill Lane, Leeds LS1 4AB",
+          "hours": [],
+          "ctas": [],
+          "emailLabel": "Email",
+          "phoneLabel": "Phone",
+          "addressLabel": "Address",
+          "hoursLabel": "Opening hours"
+        },
+        {
+          "type": "richText",
+          "anchor": "hours",
+          "title": "Opening hours",
+          "body": "## When to find us\n\n- **Tuesday to Friday:** 7:30 to 16:00\n- **Saturday and Sunday:** 8:00 to 15:00\n- **Monday:** closed\n\nFind us at 12 Mill Lane, Leeds LS1 4AB."
+        },
+        {
+          "type": "ctaPanel",
+          "title": "Prefer to talk it through?",
+          "lede": "Give us a ring during opening hours and we will help you plan your order.",
+          "ctas": [
+            {
+              "label": "Call +44 113 496 0000",
+              "href": "tel:+441134960000",
+              "variant": "primary"
+            }
           ]
         }
       ]
